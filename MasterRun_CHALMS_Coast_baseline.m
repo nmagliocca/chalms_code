@@ -449,6 +449,8 @@ for mrun=1:MRUNS
     
     VARLAYER=VARLAYER+BASELAYER;    %record frequency of development per cell across model runs
     
+    cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\results
+    
     ndate=datestr(date,'ddmmyy');
     fname=sprintf('results_CHALMS_Coast_baseline_%d',mrun);
     
