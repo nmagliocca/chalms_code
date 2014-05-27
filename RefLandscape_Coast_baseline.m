@@ -490,9 +490,19 @@ for nf=1:Nfarmers
 %     farmprod=ones(length(farmacres),1)*FARMPROD+PRODSTD*randn(1);
 %     farmcost=ones(length(farmacres),1)*FARMCOST+COSTSTD*randn(1);
 %     farmret=ones(length(farmacres),1)*normrnd(AVGFARMRETURN,STDFARMRETURN,1,1);
+
+%   %%%  AVGFARMRETURN=2486.3;
+    [farmrow,farmcol]=ind2sub([NLENGTH NWIDTH],farmacres);
+    farmmindist=(min(farmcol)-5)*cell2mile;
     farmprod=ones(length(farmacres),1)*FARMPROD;
     farmcost=ones(length(farmacres),1)*FARMCOST;
-    farmret=ones(length(farmacres),1)*AVGFARMRETURN;
+    if farmmindist < 0.5
+        farmret=ones(length(farmacres),1)*3*AVGFARMRETURN;
+    elseif farmmindist >=0.5 && farmmindist < 1
+        farmret=ones(length(farmacres),1)*2*AVGFARMRETURN;
+    elseif farmmindist >= 1
+        farmret=ones(length(farmacres),1)*AVGFARMRETURN;
+    end
     sublandvalue(farmacres)=farmret;
     subpland(farmacres)=farmret;
     if length(farmacres) < 3
