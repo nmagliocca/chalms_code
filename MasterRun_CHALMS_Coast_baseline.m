@@ -59,7 +59,7 @@ for mrun=1:MRUNS
 
     DELTA=0.0527;
     survivalrate=0.9499;
-    LOCWGHT=0.1;
+    LOCWGHT=0.5;
 %     LOCWGHT=0.2955;
     REGWGHT=1-LOCWGHT;
     PCTSEARCH=0.5887;
