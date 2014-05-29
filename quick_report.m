@@ -29,7 +29,8 @@ for i=1:length(cat(1,Lottype{inotvac,1}))
 end
 
 figure(3)
-surf(incometest)
+imagesc(incometest)
+% surf(incometest)
 axis ij
 view(0,90)
 set(gca,'clim',[0 200000])
@@ -37,7 +38,8 @@ colorbar
 title('Consumer Income')
 
 figure(4)
-surf(preftest)
+imagesc(preftest)
+% surf(preftest)
 axis ij
 view(0,90)
 set(gca,'clim',[0 0.5])
@@ -45,7 +47,8 @@ colorbar
 title('Consumer Coastal Pref')
 
 figure(5)
-surf(reshape(BUILDTIME,80,80))
+imagesc(reshape(BUILDTIME,80,80))
+% surf(reshape(BUILDTIME,80,80))
 axis ij
 view(0,90)
 set(gca,'clim',[10 30])
@@ -65,7 +68,8 @@ for nf=1:length(farmsoldinfo(:,1))
     landsales(ifarm)=farmsoldinfo(nf,4);
 end
 figure(7)
-surf(landsales)
+% surf(landsales)
+imagesc(landsales)
 axis ij
 view(0,90)
 colorbar
