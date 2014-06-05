@@ -13,20 +13,24 @@
 % Map layer input
 COAST=zeros(NLENGTH,NWIDTH);
 SCAPE=zeros(NLENGTH,NWIDTH);
-COAST(:,1:5)=1;
+%%% Coast is the eastern edge of the region
+% COAST(:,1:5)=1;
 icoast=find(COAST==1);
 SCAPE(COAST~=1)=1;
 iscape=(SCAPE==1);
 iscapelist=find(iscape==1);
 
-coastdist=cumsum(SCAPE,2);
+coastdist=NWIDTH+1-cumsum(SCAPE,2);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%   Distance matrices   %%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-load DIST2CBD
+cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\data_files
+load DIST2CBD_east
+cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\base-chalms-code
+
 % icenterrow=1;
 % % icentercol=round(NWIDTH/2);
-% icentercol=6;
+% icentercol=NWIDTH;
 % 
 % for col=1:NWIDTH
 %     dist2hznnei(1:NLENGTH,col)=abs(col-icentercol).*ones(NLENGTH,1);
@@ -418,8 +422,20 @@ BASELAYER(cat(1,Lottype{:,2}))=1;
 
 stream.Substream=35;
 stream.State=repeatstate2;
+cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\data_files
+load FARMMAP_grid
+cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\base-chalms-code
 
-load FARMMAP
+% %<><><><><><><><><><><><><><> Regular Farm Grid <><><><><><><><><><><><><><>
+% PARCEL=10;
+% AGLAYER=zeros(NLENGTH,NWIDTH);
+% for c=1:NWIDTH/PARCEL
+%     iparcelcol=PARCEL*(c-1)+(1:PARCEL);
+%     for r=1:PARCEL
+%         iparcelrow=PARCEL*(r-1)+(1:PARCEL);
+%         AGLAYER(iparcelrow,iparcelcol)=(c-1)*PARCEL+r;
+%     end
+% end
 
 % %<><><><><><><><><><> Randomized Land Allocation <><><><><><><><><><><><><>
 % startpos=zeros(Nfarmers,1);

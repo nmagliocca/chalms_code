@@ -22,7 +22,7 @@ for mrun=1:MRUNS
     %%
     stream.Substream=mrun;
 
-    mrun
+    disp(mrun)
 
 %<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
 %     % M-files needed to run
