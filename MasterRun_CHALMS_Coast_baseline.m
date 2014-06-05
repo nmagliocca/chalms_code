@@ -43,8 +43,8 @@ for mrun=1:MRUNS
 %     15. GetResults_CHALMS_Coast_base.m
 %<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
     %%% Housing Layer %%%
-    HTYPE=3;
-    LTYPE=3;
+    HTYPE=2;
+    LTYPE=4;
     HT=HTYPE*LTYPE;
         
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -90,7 +90,7 @@ for mrun=1:MRUNS
     Nbrokers=(NLENGTH/5)^2;
     
     %%% Agricultural Layer %%%
-    Nfarmers=50;
+    Nfarmers=64;
     
     %%% Price Projection Models %%%
     NUMMODEL=20;

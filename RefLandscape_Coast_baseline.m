@@ -126,8 +126,8 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%   ZONING   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-house2acre=[2 0.5 0.2]';
-zs=min(max(1./house2acre,0),5);
+house2acre=[4 2 1 0.5]';
+zs=min(max(1./house2acre,0),2);
 
 for zt=1:NZONES
     ZONES(zt,2:3)=num2cell([min(zs) max(zs)]); %no zoning
@@ -256,10 +256,10 @@ if isempty(find(adjcells==1,1))==0
                 continue
             else
                 [frows,fcols]=ind2sub([NLENGTH,NWIDTH],mylots(ml));
-                rnei=(fcols+1)*NLENGTH-(NLENGTH-frows);
-                lnei=(fcols-1)*NLENGTH-(NLENGTH-frows);
-                upnei=fcols*NLENGTH-(NLENGTH-(frows-1));
-                dnnei=fcols*NLENGTH-(NLENGTH-(frows+1));
+                rnei=min((fcols+1),NWIDTH)*NLENGTH-(NLENGTH-frows);
+                lnei=max((fcols-1),0)*NLENGTH-(NLENGTH-frows);
+                upnei=fcols*NLENGTH-(NLENGTH-max((frows-1),0));
+                dnnei=fcols*NLENGTH-(NLENGTH-min((frows+1),NLENGTH));
                 distcells=[rnei;lnei;upnei;dnnei];
                 edgecells=find(LOTS(distcells)==0);
                 if isempty(edgecells)==1
@@ -276,7 +276,7 @@ ilotfill=find(LOTS==0 & SCAPE==1);
 LOTS(ilotfill)=Nlots(1)+(1:length(ilotfill));
 %<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
 
-housesize=[1500 2000 2500]';
+housesize=[1500 2500]';
 house2cells=unique(LOTS((LOTS < 250)));
 
 %%%% Amenity Level
@@ -296,7 +296,7 @@ for ih=1:length(house2cells)
     AMLEVEL(isamecell)=mean(cat(1,coastprox{isamecell}));
 end
 
-z=[reshape(repmat(zs,1,3)',HT,1) repmat(housesize,3,1)];
+z=[reshape(repmat(zs,1,HTYPE)',HT,1) repmat(housesize,LTYPE,1)];
 
 % devpref=[6; 4.67; 5.75; 4.67; 4.58; 4.33; 4.11]./7;
 % devpref=[0.851; 0.646; 0.823; 0.620; 0.604; 0.601; 0.641];
@@ -431,9 +431,9 @@ cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\base-chalms-code
 % AGLAYER=zeros(NLENGTH,NWIDTH);
 % for c=1:NWIDTH/PARCEL
 %     iparcelcol=PARCEL*(c-1)+(1:PARCEL);
-%     for r=1:PARCEL
+%     for r=1:NLENGTH/PARCEL
 %         iparcelrow=PARCEL*(r-1)+(1:PARCEL);
-%         AGLAYER(iparcelrow,iparcelcol)=(c-1)*PARCEL+r;
+%         AGLAYER(iparcelrow,iparcelcol)=(c-1)*NWIDTH/PARCEL+r;
 %     end
 % end
 
@@ -508,16 +508,17 @@ for nf=1:Nfarmers
 %     farmret=ones(length(farmacres),1)*normrnd(AVGFARMRETURN,STDFARMRETURN,1,1);
 
 %   %%%  AVGFARMRETURN=2486.3;
-    [farmrow,farmcol]=ind2sub([NLENGTH NWIDTH],farmacres);
-    farmmindist=(min(farmcol)-5)*cell2mile;
+%     [farmrow,farmcol]=ind2sub([NLENGTH NWIDTH],farmacres);
+    farmmindist=min(coastdist(farmacres))*cell2mile;
+%     farmmindist=(min(farmcol)-5)*cell2mile;
     farmprod=ones(length(farmacres),1)*FARMPROD;
     farmcost=ones(length(farmacres),1)*FARMCOST;
     if farmmindist < 0.5
-        farmret=ones(length(farmacres),1)*3*AVGFARMRETURN;
+        farmret=ones(length(farmacres),1)*3*AVGFARMRETURN-cat(1,travelcost{farmacres});
     elseif farmmindist >=0.5 && farmmindist < 1
-        farmret=ones(length(farmacres),1)*2*AVGFARMRETURN;
+        farmret=ones(length(farmacres),1)*2*AVGFARMRETURN-cat(1,travelcost{farmacres});
     elseif farmmindist >= 1
-        farmret=ones(length(farmacres),1)*AVGFARMRETURN;
+        farmret=ones(length(farmacres),1)*AVGFARMRETURN-cat(1,travelcost{farmacres});
     end
     sublandvalue(farmacres)=farmret;
     subpland(farmacres)=farmret;
