@@ -1,11 +1,12 @@
 
 figure(1)
-surf(reshape(LOTTYPE(:,25),80,80))
+imagesc(reshape(LOTTYPE(:,15),80,80))
+% surf(reshape(LOTTYPE(:,25),80,80))
 axis ij
 view(0,90)
 set(gca,'clim',[1 HT])
 colorbar
-title('t=25')
+title('t=15')
 
 figure(2)
 plot(10:30,avgrent(:,10:30),'-')
@@ -124,6 +125,8 @@ for tt=1:length(TSTART+1:TMAX)
     set(h,'clim',clim)
     colorbar
     title('Farmer Price Expectations')
+    drawnow
+    hold on
     subplot(3,1,2)
     axis([0 80 0 80 0 maxpoint]);
     imagesc(fsoldmap(:,:,tt),clim)
@@ -131,18 +134,21 @@ for tt=1:length(TSTART+1:TMAX)
     set(h,'clim',clim)
     colorbar
     title('Land Sale Price')
+    drawnow
+    hold on
     subplot(3,1,3)
     axis([11 30 0 maxpoint]);
     set(gca,'nextplot','replacechildren')
     iplot=find(lpsort(:,2)<tt+TSTART,1,'last');
     plot(lpsort(1:iplot,2),lpsort(1:iplot,4),'*')
+    drawnow
     hold on
 %     ylabel('Land Price')
 %     xlabel('Time Step')
     title('Land Price vs. Time')
-    frm=figure(8);
-    F(tt)=getframe(frm);
-    writeVideo(writerObj,F(tt));
+%     frm=figure(8);
+%     F(tt)=getframe(frm);
+%     writeVideo(writerObj,F(tt));
 end
 close(writerObj);
 
