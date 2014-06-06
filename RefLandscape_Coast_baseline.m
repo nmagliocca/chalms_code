@@ -307,12 +307,12 @@ for lt=1:HT
     if z(lt,1) < 1
         simlotrange(lt,1)=1;
         simlotrange(lt,2)=find(z(:,1) < 1,1,'last');
-    elseif z(lt,1) >=1 && z(lt,1) <=2
+    elseif z(lt,1) >=1 && z(lt,1) < 2
         simlotrange(lt,1)=find(z(:,1) >= 1,1,'first');
-        simlotrange(lt,2)=find(z(:,1) <= 2,1,'last');
-    elseif z(lt,1) > 1
-        simlotrange(lt,1)=find(z(:,1) > 1,1,'first');
-        simlotrange(lt,2)=HT;
+        simlotrange(lt,2)=find(z(:,1) < 2,1,'last');
+    elseif z(lt,1) >= 2
+        simlotrange(lt,1)=find(z(:,1) >= 2,1,'first');
+        simlotrange(lt,2)=find(z(:,1) >= 2,1,'last');
     end
 end
 
@@ -513,9 +513,9 @@ for nf=1:Nfarmers
 %     farmmindist=(min(farmcol)-5)*cell2mile;
     farmprod=ones(length(farmacres),1)*FARMPROD;
     farmcost=ones(length(farmacres),1)*FARMCOST;
-    if farmmindist < 0.5
+    if farmmindist < 0.3
         farmret=ones(length(farmacres),1)*3*AVGFARMRETURN-cat(1,travelcost{farmacres});
-    elseif farmmindist >=0.5 && farmmindist < 1
+    elseif farmmindist >=0.3 && farmmindist < 1
         farmret=ones(length(farmacres),1)*2*AVGFARMRETURN-cat(1,travelcost{farmacres});
     elseif farmmindist >= 1
         farmret=ones(length(farmacres),1)*AVGFARMRETURN-cat(1,travelcost{farmacres});

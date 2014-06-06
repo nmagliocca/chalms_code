@@ -150,7 +150,7 @@ while openhouse > 0
        conid=conset(cs);
        CONINFO{conid,8}=1;
        CONINFO{conid,9}=uset(ilotid(ipick));
-%        CONFINO{conid,9}=uset(conid,lotid);
+%        CONINFO{conid,9}=uset(conid,lotid);
        lotchoice{lotid,4}=1;
        lotchoice{lotid,5}=conid;
        lotchoice{lotid,6}=max(ceil(TSTART+avgrestime/2+normrnd(avgrestime/...
@@ -184,6 +184,7 @@ popin=cat(1,lotchoice{ifilled,5});
 popout=conlist(~ismember(conlist,popin));
 lotchoice(istillvac,7)=num2cell(Paskhouse(istillvac)./(1+discount));
 lotchoice(istillvac,6)=num2cell(ones(length(istillvac),1)*TSTART+1);
+lotchoice(istillvac,8)=num2cell(zeros(length(istillvac),1));
 % istillvac=find(con2lot(:,2)==0);
 % popout=find(ismember(1:Nconsumers,con2lot(:,2))'==0);
 % popin=find((ismember(1:Nconsumers,popout)==0)==1)';

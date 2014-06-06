@@ -158,3 +158,18 @@ movie2avi(F,'farmer_expt_viz.avi','fps',2);
 writerObj=VideoWriter('farmer_viz.mp4');
 open(writerObj);
 writeVideo(writerObj,F)
+
+
+%%% Check Hedonics
+% mdl=fitlm([cat(1,Lottype{ifilled,3}) cat(1,Lottype{ifilled,4})...
+%         cat(1,Lottype{ifilled,8}) cat(1,Lottype{ifilled,7})],...
+%         cat(1,lotchoice{ifilled,7}))
+% try adding consumer attributes, which can be replaced by broker averages
+% for prediction
+mdl=fitlm([cat(1,Lottype{ifilled,3}) cat(1,Lottype{ifilled,4})...
+        cat(1,Lottype{ifilled,8}) cat(1,Lottype{ifilled,7}) ...
+        cat(1,CONINFO{cat(1,lotchoice{ifilled,5}),1})],...
+        cat(1,lotchoice{ifilled,7}));
+
+figure
+plot(mdl)
