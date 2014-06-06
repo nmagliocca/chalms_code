@@ -168,10 +168,11 @@ for ibr=1:Nbrokers
                 mean(cat(1,CONINFO{iblots(isnotvac,4),5})) ...
                 mean(cat(1,CONINFO{iblots(isnotvac,4),6}))];
         end
-        AVGUTIL(brokerind)=CONINFO(iblots(:,4),9);
-        BIDLEVEL(brokerind)=num2cell(cat(1,lotchoice{brokerind,7})./(cat(1,Lottype{brokerind,6})+...
-            discount*subplandinfo(cat(1,lotchoice{brokerind,2})).*...
-            cat(1,Lottype{brokerind,3})));
+        AVGUTIL(brokerind(isnotvac))=CONINFO(iblots(isnotvac,4),9);
+        BIDLEVEL(brokerind(isnotvac))=num2cell(cat(1,lotchoice{brokerind(isnotvac),7})./...
+            (cat(1,Lottype{brokerind(isnotvac),6})+...
+            discount*subplandinfo(cat(1,lotchoice{brokerind(isnotvac),2})).*...
+            cat(1,Lottype{brokerind(isnotvac),3})));
         sampleinfo=zeros(length(brokerind),6);
         sampleinfo(:,1)=cat(1,lotchoice{brokerind,7});
         sampleinfo(:,2)=cat(1,lotchoice{brokerind,3});
@@ -355,9 +356,10 @@ for t=TSTART+1:TMAX
         (searchtimemax-searchtimemin)*rand(length(ileave(returncon)),1)));
     lotchoice(ileave,4)=num2cell(zeros(length(ileave),1));
     iwasocc=(cat(1,lotchoice{ileave,5})~=0);
-    CONFINFO(cat(1,lotchoice{ileave(iwasocc),5}),8)=...
+    CONINFO(cat(1,lotchoice{ileave(iwasocc),5}),8)=...
         num2cell(zeros(length(cat(1,lotchoice{ileave(iwasocc),5})),1));
-    newopenlots(:,t)=max([histc(cat(1,lotchoice{ileave,3}),1:HT) zeros(HT,1)],[],2);
+    openlothist=histc(cat(1,lotchoice{ileave,3}),1:HT);
+    newopenlots(:,t)=max(reshape([openlothist zeros(size(openlothist))],HT,2),[],2);
     iexisthouse=ileave;
     numlt(:,t)=histc(cat(1,Lottype{:,5}),1:HT);
 
@@ -506,12 +508,27 @@ for t=TSTART+1:TMAX
         isimcells=unique(cat(1,Lottype{ismember(cat(1,Lottype{:,1}),cat(1,lotchoice{isimlots,1})),2}));
 
         %Regional Stats
-        simlots_income(lt)=median(cat(1,CONINFO{cat(1,lotchoice{isimlots,5}),1}));
-        simlots_util(lt)=median(cat(1,AVGUTIL{isimlots}));
-        simlots_alpha(lt)=mean(cat(1,CONINFO{cat(1,lotchoice{isimlots,5}),3}));
-        simlots_beta(lt)=mean(cat(1,CONINFO{cat(1,lotchoice{isimlots,5}),4}));
-        simlots_gamma(lt)=mean(cat(1,CONINFO{cat(1,lotchoice{isimlots,5}),5}));
-        simlots_ampref(lt)=mean(cat(1,CONINFO{cat(1,lotchoice{isimlots,5}),6}));
+        if isempty(find(cat(1,lotchoice{:,3})==lt,1))==1
+            simlots_income(lt)=median(cat(1,CONINFO{cat(1,lotchoice{isimlots,5}),1}));
+%             simlots_util(lt)=median(cat(1,AVGUTIL{isimlots}));
+            simlots_alpha(lt)=mean(cat(1,CONINFO{cat(1,lotchoice{isimlots,5}),3}));
+            simlots_beta(lt)=mean(cat(1,CONINFO{cat(1,lotchoice{isimlots,5}),4}));
+            simlots_gamma(lt)=mean(cat(1,CONINFO{cat(1,lotchoice{isimlots,5}),5}));
+            simlots_ampref(lt)=mean(cat(1,CONINFO{cat(1,lotchoice{isimlots,5}),6}));
+        else
+            simlots_income(lt)=median(cat(1,CONINFO{cat(1,lotchoice{ifilled(...
+                cat(1,lotchoice{ifilled,3})==lt),5}),1}));
+            %         simlots_util(lt)=median(cat(1,AVGUTIL{cat(1,lotchoice{ifilled(...
+            %             cat(1,lotchoice{ifilled,3})==lt),5})}));
+            simlots_alpha(lt)=median(cat(1,CONINFO{cat(1,lotchoice{ifilled(...
+                cat(1,lotchoice{ifilled,3})==lt),5}),3}));
+            simlots_beta(lt)=median(cat(1,CONINFO{cat(1,lotchoice{ifilled(...
+                cat(1,lotchoice{ifilled,3})==lt),5}),4}));
+            simlots_gamma(lt)=median(cat(1,CONINFO{cat(1,lotchoice{ifilled(...
+                cat(1,lotchoice{ifilled,3})==lt),5}),5}));
+            simlots_ampref(lt)=median(cat(1,CONINFO{cat(1,lotchoice{ifilled(...
+                cat(1,lotchoice{ifilled,3})==lt),5}),6}));
+        end
         
         ireglot=(cat(1,Lottype{:,5})==lt);
         if isempty(find(ireglot,1))==1
@@ -529,8 +546,12 @@ for t=TSTART+1:TMAX
     reg_ampref=mean(cat(1,CONINFO{cat(1,lotchoice{isimlots,5}),6}));
     
     %Hedonic housing price estimation
-    B=mvregress([ones(length(ifilled),1) cat(1,Lottype{ifilled,3}) ...
-        cat(1,Lottype{ifilled,8}) cat(1,Lottype{ifilled,7})],...
+%     B=mvregress([ones(length(ifilled),1) cat(1,Lottype{ifilled,3}) ...
+%         cat(1,Lottype{ifilled,8}) cat(1,Lottype{ifilled,7})],...
+%         cat(1,lotchoice{ifilled,7}));
+    rentmdl=fitlm([cat(1,Lottype{ifilled,3}) cat(1,Lottype{ifilled,4})...
+        cat(1,Lottype{ifilled,8}) cat(1,Lottype{ifilled,7}) ...
+        cat(1,CONINFO{cat(1,lotchoice{ifilled,5}),1})],...
         cat(1,lotchoice{ifilled,7}));
 
     ddist2hznnei=zeros(NLENGTH,NWIDTH);    %distance to horizontal neighbor from icenter
@@ -562,8 +583,11 @@ for t=TSTART+1:TMAX
                 end
                 warning('on','all');
                 if likelotcount == 0
-                    subRENTPROJ(lt)=B(1)+B(2)*z(lt,1)+B(3)*...
-                        travelcost{potentialbuy(tl)}+B(4)*coastprox{potentialbuy(tl)};
+%                     subRENTPROJ(lt)=B(1)+B(2)*z(lt,1)+B(3)*...
+%                         travelcost{potentialbuy(tl)}+B(4)*coastprox{potentialbuy(tl)};
+                    subRENTPROJ(lt)=predict(rentmdl,[z(lt,1) z(lt,2) ...
+                        travelcost{potentialbuy(tl)} coastprox{potentialbuy(tl)} ...
+                        simlots_income(lt)]);
                 else
                     % find close lots upon which to base rent projections
                     nclosecells=max(likelotcount*min(z(lt,1),1),round(length(iurblist)*PCTSEARCH));
@@ -577,8 +601,11 @@ for t=TSTART+1:TMAX
                     if isempty(icloselot)==1
                         % If similar housing type is not found in search
                         % area ...
-                        locrentproj=B(1)+B(2)*z(lt,1)+B(3)*...
-                            travelcost{potentialbuy(tl)}+B(4)*coastprox{potentialbuy(tl)};
+%                         locrentproj=B(1)+B(2)*z(lt,1)+B(3)*...
+%                             travelcost{potentialbuy(tl)}+B(4)*coastprox{potentialbuy(tl)};
+                        locrentproj=predict(rentmdl,[z(lt,1) z(lt,2) ...
+                            travelcost{potentialbuy(tl)} coastprox{potentialbuy(tl)} ...
+                            simlots_income(lt)]);
                         regrentproj=regionalrent(lt,t)-margtc*...
                             (dist2cbd(vacrow,vaccol)-regionaldist(lt,t));
                         subRENTPROJ(lt)=LOCWGHT*locrentproj+...
@@ -586,8 +613,11 @@ for t=TSTART+1:TMAX
                     else
                         locrentproj=(sum(-distrents.*devrents)/sum(-distrents))-...
                             margtc*distrents(iclstcell);
-                        regrentproj=regionalrent(lt,t)-margtc*...
-                            (dist2cbd(vacrow,vaccol)-regionaldist(lt,t));
+                        regrentproj=predict(rentmdl,[z(lt,1) z(lt,2) ...
+                            travelcost{potentialbuy(tl)} coastprox{potentialbuy(tl)} ...
+                            simlots_income(lt)]);
+%                         regrentproj=regionalrent(lt,t)-margtc*...
+%                             (dist2cbd(vacrow,vaccol)-regionaldist(lt,t));
                         subRENTPROJ(lt)=LOCWGHT*locrentproj+...
                             REGWGHT*regrentproj;
                     end
@@ -892,7 +922,7 @@ for t=TSTART+1:TMAX
             BASELAYER(totnewbuildcells)=1;
             VACLAND(totnewbuildcells,t)=0;
             nl=length(Lottype(:,1))+1;
-            Lottype(nl,1)=nl;
+            Lottype{nl,1}=nl;
             lotchoice{nl,1}=nl;
             Lottype{nl,2}=iadded;
             lotchoice{nl,2}=iadded(1);
