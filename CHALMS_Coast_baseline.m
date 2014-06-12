@@ -48,7 +48,8 @@ cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\base-chalms-code
 
 %%% Initialize based on calibrated model
 Paskhouse(1:Nlots(1),1)=predict(rentmdl,[cat(1,Lottype{:,3}) cat(1,Lottype{:,8})...
-        cat(1,Lottype{:,7}) cat(1,CONINFO{1:Nlots(1),1})]);
+        cat(1,Lottype{:,7}) cat(1,[CONINFO{1:length(CONINFO),1} ...
+        CONINFO{1:Nlots(1)-length(CONINFO),1}])']);
 %%% Initialize based on construction and travel costs
 % Paskhouse(1:Nlots(1),1)=cat(1,Lottype{:,6})-cat(1,travelcost{cat(1,lotchoice{:,2})});
 

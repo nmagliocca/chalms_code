@@ -1,12 +1,12 @@
 
 figure(1)
-imagesc(reshape(LOTTYPE(:,25),80,80))
+imagesc(reshape(LOTTYPE(:,15),80,80))
 % surf(reshape(LOTTYPE(:,25),80,80))
 axis ij
 view(0,90)
 set(gca,'clim',[1 HT])
 colorbar
-title('t=25')
+title('t=15')
 
 figure(2)
 plot(10:30,avgrent(:,10:30),'-')
