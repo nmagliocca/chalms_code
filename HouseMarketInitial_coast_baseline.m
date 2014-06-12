@@ -49,8 +49,9 @@ for c=1:length(CONINFO(:,1))
 % %     U(c,:)=Umax;
 % %     mitchoice(c,:)=mitcheck;
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    ihousein=(cat(1,BIDLEVEL{:}).*Paskhouse < wtpcon(c,:)' & U(c,:)' > ...
-        CONINFO{c,3}*max(U(c,:)));
+%     ihousein=(cat(1,BIDLEVEL{:}).*Paskhouse < wtpcon(c,:)' & U(c,:)' > ...
+%         CONINFO{c,3}*max(U(c,:)));
+    ihousein=cat(1,BIDLEVEL{:}).*Paskhouse < wtpcon(c,:)';
     ihouseout=find(ihousein == 0);
     
     Unorm(c,ihousein)=U(c,ihousein)./max(U(c,ihousein));

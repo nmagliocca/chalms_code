@@ -53,8 +53,9 @@ for c=1:length(inewcon)
 % %     U(c,:)=Umax;
 % %     mitchoice(c,:)=mitcheck;
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    ihousein=(cat(1,BIDLEVEL{inewlots}).*Paskhouse(inewlots) < wtpcon(inewcon(c),inewlots)' & ...
-        U(inewcon(c),inewlots)' > CONINFO{inewcon(c),3}*max(U(inewcon(c),inewlots)));
+%     ihousein=(cat(1,BIDLEVEL{inewlots}).*Paskhouse(inewlots) < wtpcon(inewcon(c),inewlots)' & ...
+%         U(inewcon(c),inewlots)' > CONINFO{inewcon(c),3}*max(U(inewcon(c),inewlots)));
+    ihousein=cat(1,BIDLEVEL{inewlots}).*Paskhouse(inewlots) < wtpcon(inewcon(c),inewlots)';
     ihouseout=find(inewlots(ihousein) == 0);
     
     Unorm(inewcon(c),inewlots(ihousein))=U(inewcon(c),inewlots(ihousein))./...
@@ -72,7 +73,9 @@ for c=1:length(inewcon)
     end
     subnhouselook(inewcon(c),inewlots)=(ihousein==1);
 end
-%%% START here!!
+% if t>=12 && isempty(find(inewlots,1))==0
+%     keyboard
+% end
 nhouselook=(subnhouselook == 1);
 for nl=1:length(inewlots)
     notherbuyers(nhouselook(:,inewlots(nl)),inewlots(nl))=...
@@ -110,9 +113,9 @@ subPhousebid=Phousebid;
 subU=U;
 iunderbid=zeros(size(Phousebid));
 sublandinfo=cat(2,LANDINFO{3,t});
-newbidlevel=cat(1,lotchoice{inewlots,7})./(cat(1,Lottype{inewlots,6})+...
+newbidlevel=cat(1,lotchoice{inewlots,7})./((cat(1,Lottype{inewlots,6})+...
     discount*sublandinfo(cat(1,lotchoice{inewlots,2})).*...
-    cat(1,Lottype{inewlots,3}));
+    cat(1,Lottype{inewlots,3})).^(1+(t-cat(1,Lottype{inewlots,9}))./TMAX));
 for nl=1:length(inewlots) 
     if Lottype{inewlots(nl),9} == t
         iunderbid(:,inewlots(nl))=(subPhousebid(:,inewlots(nl)) < Paskhouse...

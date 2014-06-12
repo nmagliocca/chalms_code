@@ -1,12 +1,12 @@
 
 figure(1)
-imagesc(reshape(LOTTYPE(:,15),80,80))
+imagesc(reshape(LOTTYPE(:,25),80,80))
 % surf(reshape(LOTTYPE(:,25),80,80))
 axis ij
 view(0,90)
 set(gca,'clim',[1 HT])
 colorbar
-title('t=15')
+title('t=25')
 
 figure(2)
 plot(10:30,avgrent(:,10:30),'-')
@@ -57,7 +57,8 @@ colorbar
 title('Build Time')
 
 figure(6)
-surf(houseprice)
+% surf(houseprice)
+imagesc(houseprice)
 axis ij
 view(0,90)
 colorbar
@@ -170,6 +171,10 @@ mdl=fitlm([cat(1,Lottype{ifilled,3}) cat(1,Lottype{ifilled,4})...
         cat(1,Lottype{ifilled,8}) cat(1,Lottype{ifilled,7}) ...
         cat(1,CONINFO{cat(1,lotchoice{ifilled,5}),1})],...
         cat(1,lotchoice{ifilled,7}));
+rentmdl=fitlm([cat(1,Lottype{ifilled,3}) ...
+        cat(1,Lottype{ifilled,8}) cat(1,Lottype{ifilled,7}) ...
+        cat(1,CONINFO{cat(1,lotchoice{ifilled,5}),1})],...
+        cat(1,lotchoice{ifilled,7}));   
 
 figure
-plot(mdl)
+plot(rentmdl)
