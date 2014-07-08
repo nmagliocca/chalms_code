@@ -12,7 +12,7 @@ repeatstate2=stream.State;
 stream.Substream=4;
 repeatstate3=stream.State;
 
-MRUNS=30;
+MRUNS=1;
 rstate=[1 5 18 69 74 20 49 11 56 1009 23 47 58 13 85 52 29 85 46 6 99 216 549 876 316 545 468 736 984 2546];
 parmfit=zeros(MRUNS,7);
 
@@ -53,6 +53,7 @@ for mrun=1:MRUNS
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     
     EmpDataInput_coast_base
+    exp_parms
     
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%    PARAMETERS    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -60,12 +61,11 @@ for mrun=1:MRUNS
 
     DELTA=0.0527;
     survivalrate=0.9499;
-%     LOCWGHT=0.5;
     LOCWGHT=0.2955;
     REGWGHT=1-LOCWGHT;
     PCTSEARCH=0.5887;
     zeta=0.5;   %dampening on epsilon-- must be >0, controls the rate of price ...
-    %increase/preception of market power
+    %increase/preception of market power in land market
 
     TMAX=30;
     TSTART=10;
@@ -82,7 +82,7 @@ for mrun=1:MRUNS
     celldiag=(cellside*sqrt(2));          %miles diag to neighboring cell's center
     acre2sqft=43560;
     avgdist2nei=mean([cellside celldiag]);
-    margtc=1.30*500*cell2mile;        %Assumed: 250 travel days a year, roundtrip
+    margtc=milecost*milestraveled*cell2mile;        %Assumed: 250 travel days a year, roundtrip
     
     %%% Zones Layer %%%
     NZONES=25;
@@ -187,10 +187,10 @@ for mrun=1:MRUNS
     w_loss=0.5;
     proftarget=5000*discount;
     
-    stormthresh=15;
-    Cdam=0.5;
-    Cmit=3000;
-    miteff=1;
+%     stormthresh=15;
+%     Cdam=0.5;
+%     Cmit=3000;
+%     miteff=1;
     
     testtime=[10 15 20 25 30];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

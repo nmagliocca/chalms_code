@@ -22,7 +22,7 @@ housepref(income2)=MIDBETA(1)+(MIDBETA(2)-MIDBETA(1))*rand(length(find(income2==
 housepref(income3)=LOWBETA(1)+(LOWBETA(2)-LOWBETA(1))*rand(length(find(income3==1)),1);
 
 CONINFO(:,3)=num2cell(1-housepref);
-CONINFO(:,6)=num2cell((0.1+(0.9-0.1)*rand(length(housepref),1)).*housepref);
+CONINFO(:,6)=num2cell((ampref_min+(ampref_max-ampref_min)*rand(length(housepref),1)).*housepref);
 CONINFO(:,4)=num2cell(rand(length(housepref),1).*...
     (housepref-cat(1,CONINFO{:,6}))/2);
 CONINFO(:,5)=num2cell(housepref-(cat(1,CONINFO{:,4})+cat(1,CONINFO{:,6})));

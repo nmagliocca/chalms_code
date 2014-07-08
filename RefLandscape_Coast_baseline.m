@@ -45,19 +45,19 @@ cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\base-chalms-code
 %         DISTANCE(row,col)=sqrt(dist2hznnei(row,col)^2+dist2vrtnei(row,col)^2);   
 %     end
 % end
-am_int=500000;
+% am_int=500000;
 travelcost(iscapelist)=num2cell(margtc*dist2cbd(iscapelist));
 travelcost(icoast)=num2cell(10000*ones(length(icoast),1));
 % coastprox=num2cell(reshape(10*(max(max(coastdist))+1-coastdist),NCELLS,1));
-coastprox=num2cell(reshape(am_int*exp(-0.1*coastdist),NCELLS,1));
+coastprox=num2cell(reshape(am0*1./exp(am_slope*coastdist),NCELLS,1));
 % coastprox=num2cell(reshape(0.1*(max(max(coastdist))+1-coastdist),NCELLS,1));
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%     Impact Surface    %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-maxPflood=0.7;
-highrisk=30;
+% maxPflood=0.7;
+% highrisk=30;
 risksurf=1./(1+exp((coastdist-highrisk)/10));
 Pflood=num2cell(reshape(maxPflood*(risksurf+(1-max(max(risksurf)))),NCELLS,1));
 % Pflood=mat2cell([(1:NCELLS)' reshape(maxPflood*(risksurf+(1-...
@@ -389,32 +389,6 @@ Nlots(1:TSTART+1)=length(Lottype(:,1));
 BIDLEVEL=num2cell(ones(Nlots(TSTART),1));
 AVGUTIL=num2cell(ones(Nlots(TSTART),1));
 BASELAYER(cat(1,Lottype{:,2}))=1;
-% Lottype=zeros(length(Lotinfo(:,1)),8);     %[id index lotsize housesize ltype ccost occ/vac amlevel]
-% lotchoice=zeros([],8);
-% cellinfo=zeros(length(iurblist),8);
-% 
-% Lottype(:,[1:2 4 8])=Lotinfo;
-% for lt=1:length(Lotinfo)
-%     isamecell=(Lottype(:,1)==Lotinfo(lt,1));
-%     Lottype(lt,3)=length(find(Lotinfo(:,1)==Lotinfo(lt,1)))/...
-%         length(find(Lotinfo(:,2)==Lotinfo(lt,2)));
-%     Lottype(lt,5)=find(z(:,1)==Lottype(lt,3) & z(:,2)==Lottype(lt,4));
-% end
-% 
-% [lotids,ilots,jnum]=unique(Lottype(:,1));
-% lotchoice(lotids,:)=Lottype(ilots,:);
-% 
-% [cellids,icells,jnumcell]=unique(Lottype(:,2));
-% cellinfo(1:length(iurblist),:)=Lottype(icells,:);
-% LOTTYPE(cellinfo(:,2))=cellinfo(:,5);
-
-
-% Nlots(1:TSTART+1)=length(lotchoice(:,1));
-% indlots=lotchoice(:,3);
-% 
-% m=zeros(Nlots(1),1);
-% m(1:Nlots(1))=lotchoice(1:Nlots(1),4)./(lotchoice(1:Nlots(1),3)*acre2sqft);
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%  Agricultural Layer   %%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -514,11 +488,14 @@ for nf=1:Nfarmers
     farmprod=ones(length(farmacres),1)*FARMPROD;
     farmcost=ones(length(farmacres),1)*FARMCOST;
     if farmmindist < 0.3
-        farmret=ones(length(farmacres),1)*3*AVGFARMRETURN-cat(1,travelcost{farmacres});
+        farmret=ones(length(farmacres),1)*coastvalue*AVGFARMRETURN-...
+            cat(1,travelcost{farmacres});
     elseif farmmindist >=0.3 && farmmindist < 1
-        farmret=ones(length(farmacres),1)*2*AVGFARMRETURN-cat(1,travelcost{farmacres});
+        farmret=ones(length(farmacres),1)*midvalue*AVGFARMRETURN-...
+            cat(1,travelcost{farmacres});
     elseif farmmindist >= 1
-        farmret=ones(length(farmacres),1)*AVGFARMRETURN-cat(1,travelcost{farmacres});
+        farmret=ones(length(farmacres),1)*inlandvalue*AVGFARMRETURN-...
+            cat(1,travelcost{farmacres});
     end
     sublandvalue(farmacres)=farmret;
     subpland(farmacres)=farmret;
