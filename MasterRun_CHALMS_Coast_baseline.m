@@ -12,7 +12,7 @@ repeatstate2=stream.State;
 stream.Substream=4;
 repeatstate3=stream.State;
 
-MRUNS=1;
+MRUNS=30;
 rstate=[1 5 18 69 74 20 49 11 56 1009 23 47 58 13 85 52 29 85 46 6 99 216 549 876 316 545 468 736 984 2546];
 parmfit=zeros(MRUNS,7);
 
@@ -20,6 +20,7 @@ VARLAYER=zeros(80*80,1);
 %%
 for mrun=1:MRUNS
     %%
+    cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\base-chalms-code
     stream.Substream=mrun;
 
     disp(mrun)

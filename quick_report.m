@@ -1,12 +1,12 @@
 
 figure(1)
-imagesc(reshape(LOTTYPE(:,15),80,80))
+imagesc(reshape(LOTTYPE(:,30),80,80))
 % surf(reshape(LOTTYPE(:,25),80,80))
 axis ij
 view(0,90)
 set(gca,'clim',[1 HT])
 colorbar
-title('t=15')
+title('t=30')
 
 figure(2)
 plot(10:30,avgrent(:,10:30),'-')
@@ -153,7 +153,114 @@ for tt=1:length(TSTART+1:TMAX)
 end
 close(writerObj);
 
-movie2avi(F,'farmer_expt_viz.avi','fps',2);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% JPEG Movie
+figure(9), set(gcf, 'Color','white')
+imagesc(reshape(LOTTYPE(:,TSTART),80,80));  axis tight
+set(gca, 'nextplot','replacechildren','Visible','off');
+
+%# create MPEG-4 object
+nFrames = 20;
+vidObj = VideoWriter('ltype_viz','MPEG-4');
+vidObj.FrameRate = 10;
+open(vidObj);
+
+%# create movie
+for k=1:nFrames
+   imagesc(reshape(LOTTYPE(:,TSTART+k),80,80))
+   colorbar
+   title('Housing Type')
+   writeVideo(vidObj, getframe(gca));
+end
+close(gcf)
+
+%# save as mp4 file, and open it using system video player
+close(vidObj);
+winopen('ltype_viz.mp4')
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% Single AVI movie of lottype
+figure(9), set(gcf, 'Color','white')
+imagesc(reshape(LOTTYPE(:,TSTART),80,80));  axis tight
+set(gca, 'nextplot','replacechildren','Visible','off');
+
+%# preallocate
+nFrames = length(TSTART+1:TMAX);
+mov(1:nFrames) = struct('cdata',[], 'colormap',[]);
+
+%# create movie
+for k=1:nFrames
+   imagesc(reshape(LOTTYPE(:,TSTART+k),80,80))
+   colorbar
+   title('Housing Type')
+   mov(k) = getframe(gca);
+end
+close(gcf)
+
+%# save as AVI file, and open it using system video player
+movie2avi(mov, 'ltype_viz.avi', 'compression','None', 'fps',10);
+
+%%%%%%%%%%%%%%%
+%%% Create gif file
+%# figure
+figure(9), set(gcf, 'Color','white')
+imagesc(reshape(LOTTYPE(:,TSTART),80,80));  axis tight
+set(gca, 'nextplot','replacechildren','Visible','off');
+
+%# preallocate
+nFrames = length(TSTART+1:TMAX);
+f = getframe(gca);
+[f,map] = rgb2ind(f.cdata, 256, 'nodither');
+movgif = repmat(f, [1 1 1 nFrames]);
+
+%# create movie
+for k=1:nFrames
+    imagesc(reshape(LOTTYPE(:,TSTART+k),80,80))
+    colorbar
+    title('Housing Type')
+    f = getframe(gca);
+    movgif(:,:,1,k) = rgb2ind(f.cdata, map, 'nodither');
+end
+close(gcf)
+
+%# create GIF and open
+imwrite(movgif, map, 'ltype.gif', 'DelayTime',0, 'LoopCount',inf)
+winopen('ltype.gif')
+% figure(9)
+% set(gcf,'color','white')
+% clim=[1 HT];  
+% imagesc(reshape(LOTTYPE(:,TSTART),80,80),clim)
+% axis ij
+% axis tight
+% set(gca,'nextplot','replacechildren','Visible','off');
+% set(gcf,'Renderer','zbuffer')
+% 
+% nframes=2*length(TSTART+1:TMAX);
+% writerObj=VideoWriter('ltype_viz');
+% writerObj.FrameRate=2;
+% open(writerObj);
+% 
+% % F(1:nframes)=struct('cdata',[],'colormap',[]);
+% for tt=1:nframes
+% %     axis([0 80 0 80 0 HT]);
+%     imagesc(reshape(LOTTYPE(:,TSTART+tt),80,80))
+%     colorbar
+%     title('Housing Type')
+%     
+% %     h=get(gcf,'CurrentAxes');
+% %     set(h,'clim',clim)
+%   
+%    
+% %     drawnow
+% %     hold on
+% %     frm=getframe;
+% %     F(tt)=
+%     writeVideo(writerObj,getframe(gca));
+% end
+% close(gcf)
+% close(writerObj);
+% %%%%%
+% 
+% movie2avi(F,'farmer_expt_viz.avi','fps',2);
 
 % M=movie(F,4,2);
 writerObj=VideoWriter('farmer_viz.mp4');
