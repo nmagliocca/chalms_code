@@ -4,7 +4,7 @@
 
 % Coastal Amenity
 am0=500000*ones(1,EXPTRUNS);
-am_slope=linspace(0.25,1.25,EXPTRUNS);
+am_slope=linspace(0.025,0.125,EXPTRUNS);
 
 % Consumer preferences
 ampref_max=0.9*ones(1,EXPTRUNS);

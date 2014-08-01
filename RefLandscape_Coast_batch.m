@@ -189,8 +189,8 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% Landscape Template %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-stream.Substream=86;
-stream.State=repeatstate1;
+% stream.Substream=86;
+rndstr(erun).State=repeatstate{1,erun};
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%    Housing Layer    %%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -394,8 +394,8 @@ BASELAYER(cat(1,Lottype{:,2}))=1;
 %%%%%%%%%%%%%%%%%%%%%%%%  Agricultural Layer   %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-stream.Substream=35;
-stream.State=repeatstate2;
+% stream.Substream=35;
+rndstr(erun).State=repeatstate{2,erun};
 cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\data_files
 load FARMMAP_grid
 cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\base-chalms-code
@@ -598,8 +598,8 @@ LANDINFO{1,TSTART}=subfarminfo;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%    Developers    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-stream.Substream=4;
-stream.State=repeatstate3;
+% stream.Substream=4;
+rndstr(erun).State=repeatstate{3,erun};
 %%%% Developer's Population Prediction Models %%%%%%%
 
 classagentmodel = ceil(POPNUMCLASS*rand(Ndevelopers,NUMMODEL));

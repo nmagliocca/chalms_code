@@ -39,8 +39,8 @@ CONINFO(:,8)=num2cell(zeros(length(CONINFO(:,1)),1));
 for tt=1:TSTART
     damcoef(:,tt)=mat2cell(ones(Nconstart,Nconstart),Nconstart,ones(Nconstart,1));
 end
-stream.Substream=mrun;
-stream.State=savedState;
+% stream.Substream=mrun;
+rdnstr.State=savedState;
 
 %%% Spin-up housing market, developer learns pricing
 cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\data_files
