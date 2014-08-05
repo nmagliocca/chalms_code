@@ -11,8 +11,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%    Physical Landscape    %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Map layer input
-COAST=zeros(NLENGTH,NWIDTH);
-SCAPE=zeros(NLENGTH,NWIDTH);
 %%% Coast is the eastern edge of the region
 % COAST(:,1:5)=1;
 icoast=find(COAST==1);
@@ -70,12 +68,7 @@ TSI=num2cell(ones(NCELLS,1));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   ZONES Layer    %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-nzoneslong=sqrt(NZONES);
-nzoneswide=sqrt(NZONES);
-extralengthz=rem(NLENGTH,nzoneslong);
-extrawidthz=rem(NWIDTH,nzoneswide);
-izonelength=(NLENGTH-extralengthz)/nzoneslong;
-izonewidth=(NWIDTH-extrawidthz)/nzoneswide;
+
 % nzlong=sqrt(NCELLS/NZONES);
 % zoneblock=zeros(nzlong);
 % for iz=1:NZONES
@@ -190,7 +183,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%% Landscape Template %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % stream.Substream=86;
-rndstr(erun).State=repeatstate{1,erun};
+rndstr.State=repeatstate{1,erun};
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%    Housing Layer    %%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -395,7 +388,7 @@ BASELAYER(cat(1,Lottype{:,2}))=1;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % stream.Substream=35;
-rndstr(erun).State=repeatstate{2,erun};
+rndstr.State=repeatstate{2,erun};
 cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\data_files
 load FARMMAP_grid
 cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\base-chalms-code
@@ -599,7 +592,7 @@ LANDINFO{1,TSTART}=subfarminfo;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % stream.Substream=4;
-rndstr(erun).State=repeatstate{3,erun};
+rndstr.State=repeatstate{3,erun};
 %%%% Developer's Population Prediction Models %%%%%%%
 
 classagentmodel = ceil(POPNUMCLASS*rand(Ndevelopers,NUMMODEL));

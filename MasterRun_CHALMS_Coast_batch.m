@@ -6,6 +6,7 @@ tic
 
 EXPTRUNS=5;
 MRUNS=30;
+% parpool(max(EXPTRUNS,12))
 stream=RandStream.create('mrg32k3a','Seed',13);
 RandStream.setGlobalStream(stream);
 
@@ -27,20 +28,30 @@ end
 
 parmfit=zeros(MRUNS,7);
 
-% load experimental parameters file
-exp_parms_batch
+poolobj=parpool(12);
+addAttachedFiles(poolobj,{'RefLandscape_Coast_batch.m','CHALMS_Coast_batch.m',...
+    'load_expmntlparms.m','loadempdata.m','HouseMarketInitial_coast_batch.m',...
+    'HouseMarketDynamic_coast_batch.m','LandMarket_coast_base.m','parsave.m',...
+    'FarmerModule_Coast_base.m','BrokersModule_Coast_0v3.m','distmat.m',...
+    'dist2coast.mat'});
+
+
 %%
 parfor erun=1:EXPTRUNS
     rndstr=RandStream.getGlobalStream;
-    rndstr.SubStream=erun;
+    %     rndstr.SubStream=erun;
     for mrun=1:MRUNS
         %%
         
         cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\base-chalms-code
-        rndstr(erun).Substream=mrun;
+        rndstr.Substream=mrun;
         
         disp([erun mrun])
         
+        % load experimental parameters file
+        [am0,am_slope,ampref_max,ampref_min,maxPflood,highrisk,stormfreq,...
+            Cdam,Cmit,miteff,AVGFARMRETURN,STDFARMRETURN,coastvalue,midvalue,...
+            inlandvalue,milecost,milestraveled]=load_expmntlparms(EXPTRUNS);
         %<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
         %     % M-files needed to run
         %     1. EmpDataInput_coast_base.m
@@ -67,8 +78,40 @@ parfor erun=1:EXPTRUNS
         %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
         %@@@@@@@@@@@@@@@@@@@@    INITIAL CONDITIONS    @@@@@@@@@@@@@@@@@@@@@@@@@@@@
         %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        discount=0.05;
+        %     ccost_base=([208273.7676
+        %     270773.7676
+        %     333273.7676
+        %     219872.3592
+        %     282372.3592
+        %     344872.3592
+        %     268120.5986
+        %     360620.5986
+        %     423120.5986])*discount;
+        ccost_base=([201624.1197
+            326624.1197
+            208273.7676
+            333273.7676
+            217748.2394
+            342748.2394
+            232872.3592
+            357872.3592])*discount;
+        ccost=ccost_base;
         
-        EmpDataInput_coast_base
+        resnum=[3963; 10230; 7892; 3947; 2096; 1255];
+        rtstart=[1 2; 3 7; 8 17; 18 27; 28 37; 38 47; 48 50];
+        inflate=207.342/113.6;
+        presqftcost=100*ones(1,HT);
+        streetcost=[7000; 7000; 7000; 15000; 15000; 15000; 25000; 25000; 25000]; %1987 dollars
+        sewercost=[8000; 8000; 8000; 18000; 18000; 18000; 5000; 5000; 5000];
+        incomenum=round(116783.*[0.50 .35 0.15]);
+        inspan=[40000 69999; 80000 119999; 120000 200000];
+        returnmeans=[201.17 150.17 51.82 570.94];
+        sizemans=[52 65 70 31];
+
+        [restimedata,avgrestime,stdrestime,strtcst,swrcst,infracost,...
+            incomedata,parmhat,avgincome,stdincome]=loadempdata(HT,rtstart,resnum,...
+            presqftcost,streetcost,sewercost,inflate,incomenum,inspan);
         
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -99,7 +142,6 @@ parfor erun=1:EXPTRUNS
         acre2sqft=43560;
         avgdist2nei=mean([cellside celldiag]);
         margtc=milecost(erun)*milestraveled(erun)*cell2mile;        %Assumed: 250 travel days a year, roundtrip
-        
         %%% Zones Layer %%%
         NZONES=25;
         
@@ -166,26 +208,6 @@ parfor erun=1:EXPTRUNS
         popurb=0.7;
         popag=0.3;
         
-        discount=0.05;
-        %     ccost_base=([208273.7676
-        %     270773.7676
-        %     333273.7676
-        %     219872.3592
-        %     282372.3592
-        %     344872.3592
-        %     268120.5986
-        %     360620.5986
-        %     423120.5986])*discount;
-        ccost_base=([201624.1197
-            326624.1197
-            208273.7676
-            333273.7676
-            217748.2394
-            342748.2394
-            232872.3592
-            357872.3592])*discount;
-        ccost=ccost_base;
-        
         tax=0.05;
         thetavac=0.2;
         thetadev=0.2;
@@ -220,11 +242,22 @@ parfor erun=1:EXPTRUNS
         DAMAGE=num2cell(zeros(NCELLS,1));
         MITIGATE=cell(NCELLS,1);
         
+        COAST=zeros(NLENGTH,NWIDTH);
+        SCAPE=zeros(NLENGTH,NWIDTH);
+        
         %%% Zones Layer - for use with zoning settings %%%
         ZONES=cell(NZONES,3);   %[cellid,min zone,max zone]
         Zones=zeros(NLENGTH,NWIDTH);
         zoning=zeros(NZONES,2);     %[(min lotsize) (max lotsize)]
         ZONEMAP=zeros(NLENGTH,NWIDTH);
+        
+        nzoneslong=sqrt(NZONES);
+        nzoneswide=sqrt(NZONES);
+        extralengthz=rem(NLENGTH,nzoneslong);
+        extrawidthz=rem(NWIDTH,nzoneswide);
+        izonelength=(NLENGTH-extralengthz)/nzoneslong;
+        izonewidth=(NWIDTH-extrawidthz)/nzoneswide;
+        
         %%% Housing Layer %%%
         % %Lottype=[id,location_index,lotsize,housesize,ltype,ccost,amlevel,travelcost,buildtime,brokerid]
         % %lotchoice=[id,location_index,ltype,occ/vac,consumer_id,residence_time,sell_price,mitchoice]
@@ -473,7 +506,7 @@ parfor erun=1:EXPTRUNS
         
         CHALMS_Coast_batch
         
-%         VARLAYER=VARLAYER+BASELAYER;    %record frequency of development per cell across model runs
+        %         VARLAYER=VARLAYER+BASELAYER;    %record frequency of development per cell across model runs
         
         cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\results
         
@@ -493,24 +526,24 @@ parfor erun=1:EXPTRUNS
             Exptret,Realexptret,Realavgexptret,idealset,profset,avgbrokervar,...
             carrycost,Lottype,CONINFO,PREFMAP,TSI,IMPACT,DAMAGE,LANDINFO,lotlocate);
         
-%         fname=sprintf('results_CHALMS_Coast_batch_%d_%d',erun,mrun);
+        %         fname=sprintf('results_CHALMS_Coast_batch_%d_%d',erun,mrun);
         
-%         save(fname,'consumerstats','vacstats','BUILDTIME','VACLAND','RENT','RETURN',...
-%             'LOTTYPE','BASELAYER','Rpop','Rvacrate','Rvaclots',...
-%             'numlt','Rleftoverpop','avgrentdynms','rentdynstats',...
-%             'farmsoldinfo','avgrent','avgfarmsize','stdfarmsize','DELTA',...
-%             'survivalrate','LOCWGHT','REGWGHT','PCTSEARCH','zeta','HIBETA',...
-%             'MIDBETA','LOWBETA','POPGROW','ccost','newhouseset','bidtot',...
-%             'meandisp','maxdevdist','setupmap','zonedensity',...
-%             'VARLAYER','vacrate','Farminfo','oldincome','Realreturn',...
-%             'Realavgret','Exptrentdiff','Avgexptdiff','htincome',...
-%             'numtotbids','totfarmrecord','htperyear','Newbidlevel',...
-%             'totbrokerrecord','Farmdist2dev','Bprojmap','Bmodelmap',...
-%             'WTAlandmap','WTPlandmap','Landprojmap','Landmodmap',...
-%             'bidshare','buildshare','landdemand','EXPTHOUSE','lotchoice',...
-%             'Exptprofit','Exptret','Realexptret','Realavgexptret','idealset',...
-%             'profset','avgbrokervar','carrycost','Lottype','CONINFO','PREFMAP',...
-%             'TSI','IMPACT','DAMAGE','LANDINFO','lotlocate')
+        %         save(fname,'consumerstats','vacstats','BUILDTIME','VACLAND','RENT','RETURN',...
+        %             'LOTTYPE','BASELAYER','Rpop','Rvacrate','Rvaclots',...
+        %             'numlt','Rleftoverpop','avgrentdynms','rentdynstats',...
+        %             'farmsoldinfo','avgrent','avgfarmsize','stdfarmsize','DELTA',...
+        %             'survivalrate','LOCWGHT','REGWGHT','PCTSEARCH','zeta','HIBETA',...
+        %             'MIDBETA','LOWBETA','POPGROW','ccost','newhouseset','bidtot',...
+        %             'meandisp','maxdevdist','setupmap','zonedensity',...
+        %             'VARLAYER','vacrate','Farminfo','oldincome','Realreturn',...
+        %             'Realavgret','Exptrentdiff','Avgexptdiff','htincome',...
+        %             'numtotbids','totfarmrecord','htperyear','Newbidlevel',...
+        %             'totbrokerrecord','Farmdist2dev','Bprojmap','Bmodelmap',...
+        %             'WTAlandmap','WTPlandmap','Landprojmap','Landmodmap',...
+        %             'bidshare','buildshare','landdemand','EXPTHOUSE','lotchoice',...
+        %             'Exptprofit','Exptret','Realexptret','Realavgexptret','idealset',...
+        %             'profset','avgbrokervar','carrycost','Lottype','CONINFO','PREFMAP',...
+        %             'TSI','IMPACT','DAMAGE','LANDINFO','lotlocate')
     end
 end
 toc
