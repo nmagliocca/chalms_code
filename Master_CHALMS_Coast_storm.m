@@ -4,8 +4,8 @@
 clear
 tic
 
-EXPTRUNS=5;
-MRUNS=30;
+EXPTRUNS=1;
+MRUNS=1;
 % parpool(max(EXPTRUNS,12))
 stream=RandStream.create('mrg32k3a','Seed',13);
 RandStream.setGlobalStream(stream);
@@ -28,22 +28,22 @@ end
 
 parmfit=zeros(MRUNS,7);
 
-poolobj=parpool(12);
-% addAttachedFiles(poolobj,{'RefLandscape_Coast_batch.m','CHALMS_Coast_batch.m',...
-%     'load_expmntlparms.m','loadempdata.m','HouseMarketInitial_coast_batch.m',...
-%     'HouseMarketDynamic_coast_batch.m','LandMarket_coast_base.m','parsave.m',...
-%     'FarmerModule_Coast_base.m','BrokersModule_Coast_0v3.m','distmat.m',...
-%     'dist2coast.mat','load_farmmap.m','load_DIST2CBD_east.m','load_distmat.m'});
-addAttachedFiles(poolobj,{'load_expmntlparms.m','loadempdata.m',...
-    'parsave.m','distmat.m','load_farmmap.m','load_DIST2CBD_east.m',...
-    'load_distmat.m'});
+% poolobj=parpool(12);
+% % addAttachedFiles(poolobj,{'RefLandscape_Coast_batch.m','CHALMS_Coast_batch.m',...
+% %     'load_expmntlparms.m','loadempdata.m','HouseMarketInitial_coast_batch.m',...
+% %     'HouseMarketDynamic_coast_batch.m','LandMarket_coast_base.m','parsave.m',...
+% %     'FarmerModule_Coast_base.m','BrokersModule_Coast_0v3.m','distmat.m',...
+% %     'dist2coast.mat','load_farmmap.m','load_DIST2CBD_east.m','load_distmat.m'});
+% addAttachedFiles(poolobj,{'load_expmntlparms.m','loadempdata.m',...
+%     'parsave.m','distmat.m','load_farmmap.m','load_DIST2CBD_east.m',...
+%     'load_distmat.m'});
 
 
 %%
-parfor erun=1:EXPTRUNS
+for erun=1:EXPTRUNS
     rndstr=RandStream.getGlobalStream;
     %     rndstr.SubStream=erun;
-    for mrun=18:MRUNS
+    for mrun=1:MRUNS
         %%
         
         cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\base-chalms-code
@@ -52,9 +52,9 @@ parfor erun=1:EXPTRUNS
 %         disp([erun mrun])
         
         % load experimental parameters file
-        [am0,am_slope,ampref_max,ampref_min,maxPflood,highrisk,stormfreq,...
-            Cdam,Cmit,miteff,AVGFARMRETURN,STDFARMRETURN,coastvalue,midvalue,...
-            inlandvalue,milecost,milestraveled]=load_expmntlparms(EXPTRUNS);
+        [am0,am_slope,ampref_max,ampref_min,maxPflood,highrisk,stormfreq,maxdam,...
+            Cmit,miteff,AVGFARMRETURN,STDFARMRETURN,coastvalue,midvalue,...
+            inlandvalue,milecost,milestraveled]=load_expmntlparms_storm(EXPTRUNS);
         %<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
         %     % M-files needed to run
         %     1. EmpDataInput_coast_base.m
@@ -244,6 +244,7 @@ parfor erun=1:EXPTRUNS
         IMPACT=cell(NCELLS,TMAX);
         DAMAGE=num2cell(zeros(NCELLS,1));
         MITIGATE=cell(NCELLS,1);
+        Cdam=cell([],TMAX);
         
         COAST=zeros(NLENGTH,NWIDTH);
         SCAPE=zeros(NLENGTH,NWIDTH);
@@ -605,6 +606,11 @@ parfor erun=1:EXPTRUNS
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%     Impact Surface    %%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%% Probability of a hurricane of a given category making landfall in a
+        %%% given year, from Costanza et al. (2008), Ambio, 37(4)
+        % Delaware, Maryland, New Jersey, North Carolina, Pennsylvania, Virginia
+        Psevere=stormfreq(erun)*[0.013 0 0 0 0; 0.0065 0.0065 0 0 0; 0.013 0 0 0 0; 0.1364 0.0844 ...
+            0.0714 0.0065 0; 0.0065 0 0 0 0; 0.0584 0.013 0.0065 0 0];
         
         % maxPflood=0.7;
         % highrisk=30;
@@ -616,6 +622,10 @@ parfor erun=1:EXPTRUNS
         % siterisk=0.1*randn(size(SCAPE));
         % siterisk=zeros(size(SCAPE));
         
+%         Pimpact=cat(1,Pflood{:})*mean(Psevere,1);
+
+        % Percent damage with storm categories 1-5
+        housedam=maxdam(erun)*[0.05 0.1 0.25 0.5 1];
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   ZONES Layer    %%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1582,7 +1592,6 @@ parfor erun=1:EXPTRUNS
             
             %%% HouseMarketInitial_coast_batch
             %%%%%%%%%%%%%% House Market Initial %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            
             wtpcon=zeros(length(CONINFO(:,1)),Nlots(TSTART));
             wtpconstar=zeros(length(CONINFO(:,1)),Nlots(TSTART));
             wtbcon=zeros(length(CONINFO(:,1)),Nlots(TSTART));
@@ -1604,12 +1613,30 @@ parfor erun=1:EXPTRUNS
             % %Lottype=[id,location index,lotsize,housesize,ltype,ccost,amlevel,travelcost,buildtime,brokerid]
             % %lotchoice=[id,location index,ltype,occ/vac,consumer id,residence time,sell price,mitchoice]
             % %CONINFO=[income,searchtime,consumer_good,housesize,lotsize,proximity,subrisk,occ/vac,utility]
+            
+            % average damage across storm categories
+%             Cdam(1:Nlots(TSTART),TSTART)=num2cell(sum(Pflood(cat(1,lotchoice{:,2})).*...
+%                 repmat(housedam,Nlots(TSTART),1).*repmat(Paskhouse,1,5),2));
+            Cdam(1:Nlots(TSTART),TSTART)=num2cell(mean((Paskhouse*housedam).*...
+                repmat(mean(Psevere,1),Nlots(TSTART),1).*...
+                repmat(cat(1,Pflood{cat(1,lotchoice{:,2})}),1,5),2));
             for c=1:length(CONINFO(:,1))
-                wtpcon(c,:)=(CONINFO{c,1}-cat(1,travelcost{cat(1,lotchoice{:,2})}))*(CONINFO{c,4}+...
+                wtpcon(c,:)=(CONINFO{c,1}-cat(1,travelcost{cat(1,lotchoice{:,2})})-...
+                    cat(1,Cdam{1:Nlots(TSTART),TSTART}))*(CONINFO{c,4}+...
                     CONINFO{c,5}+CONINFO{c,6});
-                U(c,:)=((CONINFO{c,1}-cat(1,travelcost{cat(1,lotchoice{:,2})})-...
-                    Paskhouse).^CONINFO{c,3}).*(cat(1,Lottype{:,4}).^CONINFO{c,4}).*...
-                    (cat(1,Lottype{:,3}).^CONINFO{c,5}).*(cat(1,Lottype{:,7}).^CONINFO{c,6});
+                EUnomit(c,:)=sum(mean(Psevere,1)).*...
+                    (((CONINFO{c,1}-cat(1,travelcost{cat(1,lotchoice{:,2})})-...
+                    Paskhouse-cat(1,Cdam{1:Nlots(TSTART),TSTART})).^CONINFO{c,3}).*...
+                    (cat(1,Lottype{:,4}).^CONINFO{c,4}).*(cat(1,Lottype{:,3}).^...
+                    CONINFO{c,5}).*(cat(1,Lottype{:,7}).^CONINFO{c,6}))+...
+                    (1-sum(mean(Psevere,1))).*...
+                    (((CONINFO{c,1}-cat(1,travelcost{cat(1,lotchoice{:,2})})-...
+                    Paskhouse).^CONINFO{c,3}).*...
+                    (cat(1,Lottype{:,4}).^CONINFO{c,4}).*(cat(1,Lottype{:,3}).^...
+                    CONINFO{c,5}).*(cat(1,Lottype{:,7}).^CONINFO{c,6}));
+%                 U(c,:)=((CONINFO{c,1}-cat(1,travelcost{cat(1,lotchoice{:,2})})-...
+%                     Paskhouse).^CONINFO{c,3}).*(cat(1,Lottype{:,4}).^CONINFO{c,4}).*...
+%                     (cat(1,Lottype{:,3}).^CONINFO{c,5}).*(cat(1,Lottype{:,7}).^CONINFO{c,6});
                 %%%%%%%% Expected Costs %%%%%%%%%
                 %     subdamcoef=damcoef{c,TSTART};
                 %     exptCmit(c,:)=subdamcoef.*cat(1,Pflood{cat(1,lotchoice{:,2})}).*...
@@ -1628,7 +1655,7 @@ parfor erun=1:EXPTRUNS
                 %         (cat(1,Lottype{:,4}).^CONINFO{c,4}).*(cat(1,Lottype{:,3}).^CONINFO{c,5}).*...
                 %         (cat(1,Lottype{:,7}).^CONINFO{c,6});
                 %     [Umax,mitcheck]=max([EUmit(c,:); EUnomit(c,:)]);
-                %     U(c,:)=EUnomit(c,:);
+                    U(c,:)=EUnomit(c,:);
                 %     mitchoice(c,:)=2*ones(1,length(EUnomit(c,:)));
                 % %     U(c,:)=Umax;
                 % %     mitchoice(c,:)=mitcheck;
@@ -2023,7 +2050,7 @@ parfor erun=1:EXPTRUNS
         
         ifill=ismember(lotlocate(:,1),ifilled);
         BUILDTIME(lotlocate(:,2))=cat(1,Lottype{lotlocate(:,1),9});
-        BIDLEVELMAP(lotlocate(ifill,2),1:TSTART)=repmat(cat(1,BIDLEVEL{lotlocate(ifill,1)}),1,TSTART);
+        BIDLEVELMAP(lotlocate(:,2),1:TSTART)=repmat(cat(1,BIDLEVEL{lotlocate(:,1)}),1,TSTART);
         VACLAND(cat(1,vacland{1,1}),1:TSTART)=1;
         AVGRENT(lotlocate(:,2),1:TSTART)=repmat(cat(1,lotchoice{lotlocate(:,1),7}),1,TSTART);
         LOTTYPE(lotlocate(:,2),1:TSTART)=repmat(cat(1,Lottype{lotlocate(:,1),5}),1,TSTART);
@@ -2105,8 +2132,8 @@ parfor erun=1:EXPTRUNS
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %%% Random Storm Generation
             %     stormfreq=0.1;
-            stormint=1/stormfreq(erun);
-            stormgen=TSTART:1/stormfreq(erun):TMAX;
+            stormint=round(1/sum(mean(Psevere,1)));
+            stormgen=TSTART:stormint:TMAX;
             if isempty(find(stormgen==t,1))==0
                 probsurf=cat(1,Pflood{:});
                 impactprob=1-rand(1);
@@ -2118,7 +2145,7 @@ parfor erun=1:EXPTRUNS
                 IMPACT(iimpact,t)=num2cell(ones(length(iimpact),1));
                 IMPACT(inoimpact,t)=num2cell(ones(length(inoimpact),1));
                 DAMAGE(cat(1,lotchoice{ihitlist,2}))=num2cell(cat(1,DAMAGE{cat(1,lotchoice{ihitlist,2})})+...
-                    Cdam(erun).*cat(1,lotchoice{ihitlist,7}));
+                    cat(1,Cdam{cat(1,lotchoice{ihitlist,1}),t}).*cat(1,lotchoice{ihitlist,7}));
                 TSI(iimpact)=num2cell(zeros(length(iimpact),1));
                 TSI(inoimpact)=num2cell(cat(1,TSI{inoimpact})+1);
             end
@@ -3042,16 +3069,32 @@ parfor erun=1:EXPTRUNS
             % %Lottype=[id,location index,lotsize,housesize,ltype,ccost,amlevel,travelcost,buildtime,brokerid]
             % %lotchoice=[id,location index,ltype,occ/vac,consumer id,residence time,sell price,mitchoice]
             % %CONINFO=[income,searchtime,consumer_good,housesize,lotsize,proximity,subrisk,occ/vac,utility]
+%             Cdam(inewlots,t)=mat2cell(sum(Pimpact(cat(1,lotchoice{inewlots,2})).*...
+%                 repmat(housedam,length(inewlots),1).*repmat(Paskhouse(inewlots),1,5),2));
+            Cdam(inewlots,t)=num2cell(mean((Paskhouse(inewlots)*housedam).*...
+                repmat(mean(Psevere,1),length(inewlots),1).*...
+                repmat(cat(1,Pflood{cat(1,lotchoice{inewlots,2})}),1,5),2));
             for c=1:length(inewcon)
                 if isempty(find(inewlots,1))==1
                     break
                 end
-                wtpcon(inewcon(c),inewlots)=(CONINFO{inewcon(c),1}-cat(1,travelcost{cat(1,lotchoice{inewlots,2})}))*...
+                wtpcon(inewcon(c),inewlots)=(CONINFO{inewcon(c),1}-...
+                    cat(1,travelcost{cat(1,lotchoice{inewlots,2})})-cat(1,Cdam{inewlots,t}))*...
                     (CONINFO{inewcon(c),4}+CONINFO{inewcon(c),5}+CONINFO{inewcon(c),6});
-                U(inewcon(c),inewlots)=((CONINFO{inewcon(c),1}-cat(1,travelcost{cat(1,lotchoice{inewlots,2})})-...
+                EUnomit(inewcon(c),inewlots)=sum(mean(Psevere,1)).*...
+                    (((CONINFO{inewcon(c),1}-cat(1,travelcost{cat(1,lotchoice{inewlots,2})})-...
+                    Paskhouse(inewlots)-cat(1,Cdam{inewlots,t})).^CONINFO{inewcon(c),3}).*(cat(1,Lottype{inewlots,4}).^...
+                    CONINFO{inewcon(c),4}).*(cat(1,Lottype{inewlots,3}).^CONINFO{inewcon(c),5}).*...
+                    (cat(1,Lottype{inewlots,7}).^CONINFO{inewcon(c),6}))+...
+                    (1-sum(mean(Psevere,1))).*...
+                    (((CONINFO{inewcon(c),1}-cat(1,travelcost{cat(1,lotchoice{inewlots,2})})-...
                     Paskhouse(inewlots)).^CONINFO{inewcon(c),3}).*(cat(1,Lottype{inewlots,4}).^...
                     CONINFO{inewcon(c),4}).*(cat(1,Lottype{inewlots,3}).^CONINFO{inewcon(c),5}).*...
-                    (cat(1,Lottype{inewlots,7}).^CONINFO{inewcon(c),6});
+                    (cat(1,Lottype{inewlots,7}).^CONINFO{inewcon(c),6}));
+%                 U(inewcon(c),inewlots)=((CONINFO{inewcon(c),1}-cat(1,travelcost{cat(1,lotchoice{inewlots,2})})-...
+%                     Paskhouse(inewlots)).^CONINFO{inewcon(c),3}).*(cat(1,Lottype{inewlots,4}).^...
+%                     CONINFO{inewcon(c),4}).*(cat(1,Lottype{inewlots,3}).^CONINFO{inewcon(c),5}).*...
+%                     (cat(1,Lottype{inewlots,7}).^CONINFO{inewcon(c),6});
                 %%%%%%%%%% Expected Costs %%%%%%%%%%%%
                 %     subdamcoef=damcoef{inewcon(c),t};
                 %     exptCmit(inewcon(c),inewlots)=subdamcoef(inewlots).*cat(1,Pflood{cat(1,lotchoice{inewlots,2})}).*...
@@ -3071,7 +3114,7 @@ parfor erun=1:EXPTRUNS
                 %         (cat(1,Lottype{inewlots,4}).^CONINFO{inewcon(c),4}).*(cat(1,Lottype{inewlots,3}).^...
                 %         CONINFO{inewcon(c),5}).*(cat(1,Lottype{inewlots,7}).^CONINFO{inewcon(c),6});
                 %     [Umax,mitcheck]=max([EUmit(c,:); EUnomit(c,:)]);
-                %     U(inewcon(c),inewlots)=EUnomit(inewcon(c),inewlots);
+                    U(inewcon(c),inewlots)=EUnomit(inewcon(c),inewlots);
                 %     mitchoice(inewcon(c),inewlots)=2*ones(1,length(EUnomit(inewcon(c),inewlots)));
                 % %     U(c,:)=Umax;
                 % %     mitchoice(c,:)=mitcheck;
@@ -3745,7 +3788,7 @@ end
        
 %         ndate=datestr(date,'ddmmyy');
         savefname=sprintf('landvalue_%d_%d.mat',erun,mrun);
-        parsave(savefname,...
+        parsave_storm(savefname,...
             consumerstats,vacstats,BUILDTIME,VACLAND,RENT,RETURN,LOTTYPE,...
             BASELAYER,Rpop,Rvacrate,Rvaclots,numlt,Rleftoverpop,avgrentdynms,...
             rentdynstats,farmsoldinfo,avgrent,avgfarmsize,stdfarmsize,DELTA,...
