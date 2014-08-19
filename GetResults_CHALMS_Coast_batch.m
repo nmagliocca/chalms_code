@@ -15,19 +15,20 @@ z = 1000*[0.00025    1.5000
     0.0020    1.5000
     0.0020    2.5000];
 MRUNS=30;
-ERUNS=5;
+%%% ADJUST THIS!!! %%%
+ERUNS=1;
 batchind=[reshape(repmat(1:ERUNS,MRUNS,1),MRUNS*ERUNS,1) ...
-    repmat((1:MRUNS)',5,1)];
+    repmat((1:MRUNS)',ERUNS,1)];
 batchruns=mat2cell(reshape(1:MRUNS*ERUNS,MRUNS,ERUNS),MRUNS,ones(1,ERUNS));
 
-cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\results
+cd X:\model_results\CHALMS_coast_storm
 fnames=dir;
 fnamescell=struct2cell(fnames);
-h=strncmp('results_CHALMS_Coast_batch',fnamescell(1,:),26);
+h=strncmp('storm',fnamescell(1,:),5);
 hind=find(h==1);
 cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\data_files
 load DIST2CBD_east
-cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\results
+cd X:\model_results\CHALMS_coast_storm
 distpt=ceil(min(min(dist2cbd)):max(max(dist2cbd)));
 density=zeros(NLENGTH*NWIDTH,length(hind));
 
@@ -59,7 +60,7 @@ vacrlts=zeros(length(hind),length(TSTART:TMAX));
 testpctdev=zeros(ERUNS,TMAX);
 VARLAYER=zeros(80*80,ERUNS);
 for mr=1:length(hind)
-    h=strcmp(sprintf('results_CHALMS_Coast_batch_%d_%d.mat',batchind(mr,1),...
+    h=strcmp(sprintf('storm_%d_%d.mat',batchind(mr,1),...
         batchind(mr,2)),fnamescell(1,:));
     filename=fnamescell{1,h};
     load(filename)
@@ -115,7 +116,7 @@ for mr=1:length(hind)
 %     if strcmp(sprintf('results_CHALMS_Coast_batch_%d_30',batchind(mr,1)),fnamescell(1,hind(mr)))==1
 %         buildprob=reshape(VARLAYER,NLENGTH,NWIDTH)/length(hind);
 %     end
-    VARLAYER(:,:,batchind(mr,1))=VARLAYER(:,:,batchind(mr,1))+BASELAYER;    %record frequency of development per cell across model runs
+    VARLAYER(:,batchind(mr,1))=VARLAYER(:,batchind(mr,1))+BASELAYER;    %record frequency of development per cell across model runs
     
     clear('consumerstats','vacstats','BUILDTIME','VACLAND','RENT','RETURN',...
         'LOTTYPE','BASELAYER','Rpop','Rvacrate','Rvaclots',...
@@ -236,7 +237,7 @@ for ie=1:ERUNS
 end
 %% Create figures and results
 
-cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\figs\batch
+cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\figs\storm_v1
 
 % resultsfile='baseline_results_070314.txt';
 % save(resultsfile,'avgvac','avgpctdev','-ascii')
@@ -254,16 +255,24 @@ for j=1:ERUNS
     set(h1, 'Color','white','Position',[1,1,700,700],'Visible','off');
     subplot(2,2,1);
     imagesc(AVGMAP(:,:,15,j));
+    set(gca,'Visible','off')
     title('t=15');
+    set(get(gca,'Title'),'Visible','on')
     subplot(2,2,2);
     imagesc(AVGMAP(:,:,20,j));
+    set(gca,'Visible','off')
     title('t=20');
+    set(get(gca,'Title'),'Visible','on')
     subplot(2,2,3);
     imagesc(AVGMAP(:,:,25,j));
+    set(gca,'Visible','off')
     title('t=25');
+    set(get(gca,'Title'),'Visible','on')
     subplot(2,2,4);
     imagesc(AVGMAP(:,:,30,j));
+    set(gca,'Visible','off')
     title('t=30');
+    set(get(gca,'Title'),'Visible','on')
     saveas(h1,sprintf('avg_housetypes_%d',j),'jpg')
     
     
@@ -277,15 +286,20 @@ for j=1:ERUNS
         varinc(isubdev(r),j)=var(subincomemap(isubdev(r),inotzero));
     end
     h2=figure;
-    set(h2, 'Color','white','Position',[1,1,400,700],'Visible','off');
+    orient tall
+    set(h2, 'Color','white','OuterPosition',[1,1,400,700],'Visible','off');
     subplot(2,1,1);
     imagesc(reshape(mdninc(:,j),NLENGTH,NWIDTH));
+    set(gca,'Visible','off')
     colorbar;
     title('Median Consumer Income');
+    set(get(gca,'Title'),'Visible','on')
     subplot(2,1,2);
     imagesc(reshape(varinc(:,j),NLENGTH,NWIDTH));
+    set(gca,'Visible','off')
     colorbar;
     title('Variance in Consumer Income');
+    set(get(gca,'Title'),'Visible','on')
     saveas(h2,sprintf('final_consumer_income_%d',j),'jpg')
     
     % plot build time
@@ -293,19 +307,24 @@ for j=1:ERUNS
     for r=1:length(isubdev)
         subbtmap=btmap(:,batchruns{j});
         inotzero=(subbtmap(isubdev(r),:)~=0);
-        avgbt(isubdev(r),j)=mean(btmap(isubdev(r),inotzero));
-        varbt(isubdev(r),j)=var(btmap(isubdev(r),inotzero));
+        avgbt(isubdev(r),j)=mean(subbtmap(isubdev(r),inotzero));
+        varbt(isubdev(r),j)=var(subbtmap(isubdev(r),inotzero));
     end
     h3=figure;
-    set(h3, 'Color','white','Position',[1,1,350,700],'Visible','off');
+    orient tall
+    set(h3, 'Color','white','Position',[1,1,400,700],'Visible','off');
     subplot(2,1,1);
     imagesc(reshape(avgbt(:,j),NLENGTH,NWIDTH));
+    set(gca,'Visible','off')
     colorbar;
     title('Average Build Time');
+    set(get(gca,'Title'),'Visible','on')
     subplot(2,1,2);
     imagesc(reshape(varbt(:,j),NLENGTH,NWIDTH));
+    set(gca,'Visible','off')
     colorbar;
     title('Variance in Build Time');
+    set(get(gca,'Title'),'Visible','on')
     saveas(h3,sprintf('build_time_%d',j),'jpg')
     
     % plot entropy of housing type distribution
@@ -313,7 +332,7 @@ for j=1:ERUNS
     set(h4, 'Color','white','Position',[1,1,400,400],'Visible','off');
     plot(10:30,mean(htentropy(batchruns{j},10:30),1),'--k','LineWidth',3)
     hold on
-    plot(10:30,htentropy(:,10:30),'-')
+    plot(10:30,htentropy(batchruns{j},10:30),'-')
     legend('Mean Entropy','Individual Model Runs')
     xlabel('Time Step')
     ylabel('Entropy of Housing Type Distribution')
@@ -328,15 +347,20 @@ for j=1:ERUNS
         varlandsale(r,j)=var(sublandsales(r,ilandsale(r,:)));
     end
     h5=figure;
+    orient tall
     set(h5, 'Color','white','Position',[700,300,400,700],'Visible','off');
     subplot(2,1,1);
     imagesc(reshape(avglandsale(:,j),NLENGTH,NWIDTH));
+    set(gca,'Visible','off')
     colorbar;
     title('Average Land Sales');
+    set(get(gca,'Title'),'Visible','on')
     subplot(2,1,2);
     imagesc(reshape(varlandsale(:,j),NLENGTH,NWIDTH));
+    set(gca,'Visible','off')
     colorbar;
     title('Variance in Land Sales');
+    set(get(gca,'Title'),'Visible','on')
     saveas(h5,sprintf('landsales_%d',j),'jpg')
     
     % plot consumer amenity preferences
@@ -348,15 +372,20 @@ for j=1:ERUNS
         varampref(isubdev(r),j)=var(subamprefmap(isubdev(r),inotzero));
     end
     h6=figure;
+    orient tall
     set(h6, 'Color','white','Position',[700,300,400,700],'Visible','off');
     subplot(2,1,1);
     imagesc(reshape(avgampref(:,j),NLENGTH,NWIDTH));
+    set(gca,'Visible','off')
     colorbar;
     title('Mean Consumer Amenity Preference');
+    set(get(gca,'Title'),'Visible','on')    
     subplot(2,1,2);
     imagesc(reshape(varampref(:,j),NLENGTH,NWIDTH));
+    set(gca,'Visible','off')
     colorbar;
     title('Variance in Consumer Amenity Preference');
+    set(get(gca,'Title'),'Visible','on')
     saveas(h6,sprintf('amprefmap_%d',j),'jpg')
     
     % plot avg rents

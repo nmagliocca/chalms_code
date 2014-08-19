@@ -2136,7 +2136,7 @@ for erun=1:EXPTRUNS
             stormgen=TSTART:stormint:TMAX;
             if isempty(find(stormgen==t,1))==0
                 probsurf=cat(1,Pflood{:});
-                impactprob=1-rand(1);
+                impactprob=max(cat(1,Pflood{:}))-rand(1);
                 iimpact=find(probsurf > impactprob);
                 inoimpact=find(probsurf <= impactprob);
                 lothit=ismember(lotlocate(:,2),iimpact);
@@ -2145,7 +2145,7 @@ for erun=1:EXPTRUNS
                 IMPACT(iimpact,t)=num2cell(ones(length(iimpact),1));
                 IMPACT(inoimpact,t)=num2cell(ones(length(inoimpact),1));
                 DAMAGE(cat(1,lotchoice{ihitlist,2}))=num2cell(cat(1,DAMAGE{cat(1,lotchoice{ihitlist,2})})+...
-                    cat(1,Cdam{cat(1,lotchoice{ihitlist,1}),t}).*cat(1,lotchoice{ihitlist,7}));
+                    cat(1,Cdam{ihitlist,t}).*cat(1,lotchoice{ihitlist,7}));
                 TSI(iimpact)=num2cell(zeros(length(iimpact),1));
                 TSI(inoimpact)=num2cell(cat(1,TSI{inoimpact})+1);
             end
@@ -3069,11 +3069,13 @@ for erun=1:EXPTRUNS
             % %Lottype=[id,location index,lotsize,housesize,ltype,ccost,amlevel,travelcost,buildtime,brokerid]
             % %lotchoice=[id,location index,ltype,occ/vac,consumer id,residence time,sell price,mitchoice]
             % %CONINFO=[income,searchtime,consumer_good,housesize,lotsize,proximity,subrisk,occ/vac,utility]
-%             Cdam(inewlots,t)=mat2cell(sum(Pimpact(cat(1,lotchoice{inewlots,2})).*...
-%                 repmat(housedam,length(inewlots),1).*repmat(Paskhouse(inewlots),1,5),2));
-            Cdam(inewlots,t)=num2cell(mean((Paskhouse(inewlots)*housedam).*...
-                repmat(mean(Psevere,1),length(inewlots),1).*...
-                repmat(cat(1,Pflood{cat(1,lotchoice{inewlots,2})}),1,5),2));
+            %             Cdam(inewlots,t)=mat2cell(sum(Pimpact(cat(1,lotchoice{inewlots,2})).*...
+            %                 repmat(housedam,length(inewlots),1).*repmat(Paskhouse(inewlots),1,5),2));
+            if isempty(find(inewlots,1))==0
+                Cdam(inewlots,t)=num2cell(mean((Paskhouse(inewlots)*housedam).*...
+                    repmat(mean(Psevere,1),length(inewlots),1).*...
+                    repmat(cat(1,Pflood{cat(1,lotchoice{inewlots,2})}),1,5),2));
+            end
             for c=1:length(inewcon)
                 if isempty(find(inewlots,1))==1
                     break

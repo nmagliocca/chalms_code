@@ -5,6 +5,7 @@ clear
 tic
 
 EXPTRUNS=5;
+NPARMS=3;
 MRUNS=30;
 % parpool(max(EXPTRUNS,12))
 stream=RandStream.create('mrg32k3a','Seed',13);
@@ -17,16 +18,14 @@ RandStream.setGlobalStream(stream);
 % stream.Substream=4;
 % repeatstate3=stream.State;
 
-repeatstate=cell(3,EXPTRUNS);
+repeatstate=cell(3,EXPTRUNS^NPARMS);
 rsind=[86 35 4];
-for ic=1:EXPTRUNS
+for ic=1:EXPTRUNS^NPARMS
     for ir=1:3
         stream.Substream=rsind(ir);
         repeatstate{ir,ic}=stream.State;
     end
 end
-
-parmfit=zeros(MRUNS,7);
 
 poolobj=parpool(12);
 % addAttachedFiles(poolobj,{'RefLandscape_Coast_batch.m','CHALMS_Coast_batch.m',...
@@ -40,12 +39,12 @@ addAttachedFiles(poolobj,{'load_expmntlparms.m','loadempdata.m',...
 
 
 %%
-parfor erun=1:EXPTRUNS
-    rndstr=RandStream.getGlobalStream;
+for erun=11:EXPTRUNS^NPARMS
+    
     %     rndstr.SubStream=erun;
-    for mrun=18:MRUNS
+    parfor mrun=1:MRUNS
         %%
-        
+        rndstr=RandStream.getGlobalStream;
         cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\base-chalms-code
         rndstr.Substream=mrun;
         
@@ -54,7 +53,7 @@ parfor erun=1:EXPTRUNS
         % load experimental parameters file
         [am0,am_slope,ampref_max,ampref_min,maxPflood,highrisk,stormfreq,...
             Cdam,Cmit,miteff,AVGFARMRETURN,STDFARMRETURN,coastvalue,midvalue,...
-            inlandvalue,milecost,milestraveled]=load_expmntlparms(EXPTRUNS);
+            inlandvalue,milecost,milestraveled]=load_expmntlparms(EXPTRUNS,NPARMS);
         %<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
         %     % M-files needed to run
         %     1. EmpDataInput_coast_base.m
@@ -2106,7 +2105,8 @@ parfor erun=1:EXPTRUNS
             %%% Random Storm Generation
             %     stormfreq=0.1;
             stormint=1/stormfreq(erun);
-            stormgen=TSTART:1/stormfreq(erun):TMAX;
+%             stormgen=TSTART:1/stormfreq(erun):TMAX;
+            stormgen=TMAX+1;
             if isempty(find(stormgen==t,1))==0
                 probsurf=cat(1,Pflood{:});
                 impactprob=1-rand(1);
@@ -3744,7 +3744,7 @@ end
         
        
 %         ndate=datestr(date,'ddmmyy');
-        savefname=sprintf('landvalue_%d_%d.mat',erun,mrun);
+        savefname=sprintf('am_parm_sweep_%d_%d.mat',erun,mrun);
         parsave(savefname,...
             consumerstats,vacstats,BUILDTIME,VACLAND,RENT,RETURN,LOTTYPE,...
             BASELAYER,Rpop,Rvacrate,Rvaclots,numlt,Rleftoverpop,avgrentdynms,...
