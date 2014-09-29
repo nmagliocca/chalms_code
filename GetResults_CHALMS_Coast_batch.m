@@ -16,19 +16,35 @@ z = 1000*[0.00025    1.5000
     0.0020    2.5000];
 MRUNS=30;
 %%% ADJUST THIS!!! %%%
-ERUNS=1;
+NPARMS=2;
+EXPTRUNS=5;
+ERUNS=EXPTRUNS^NPARMS;
 batchind=[reshape(repmat(1:ERUNS,MRUNS,1),MRUNS*ERUNS,1) ...
     repmat((1:MRUNS)',ERUNS,1)];
 batchruns=mat2cell(reshape(1:MRUNS*ERUNS,MRUNS,ERUNS),MRUNS,ones(1,ERUNS));
 
-cd X:\model_results\CHALMS_coast_storm
+% Experimental Parms
+am_slope=reshape(repmat(linspace(0.025,0.125,EXPTRUNS),EXPTRUNS,EXPTRUNS),...
+    1,EXPTRUNS^3);
+lvset=repmat(linspace(0.5,1.5,EXPTRUNS),1,EXPTRUNS^(3-1));
+batchparms_full=[am_slope(batchind(:,1))' lvset(batchind(:,1))'];
+batchparms_unq=[unique(batchparms_full(:,1)) unique(batchparms_full(:,2))];
+baseruns=511:540;
+
+matguide=batchparms_full;
+for ii=1:EXPTRUNS
+matguide(batchparms_full(:,1)==batchparms_unq(ii,1),1)=ii;
+matguide(batchparms_full(:,2)==batchparms_unq(ii,2),2)=ii;
+end
+
+cd X:\model_results\CHALMS_coast_am_parm_sweep
 fnames=dir;
 fnamescell=struct2cell(fnames);
-h=strncmp('storm',fnamescell(1,:),5);
+h=strncmp('am_parm_sweep',fnamescell(1,:),13);
 hind=find(h==1);
 cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\data_files
 load DIST2CBD_east
-cd X:\model_results\CHALMS_coast_storm
+cd X:\model_results\CHALMS_coast_am_parm_sweep
 distpt=ceil(min(min(dist2cbd)):max(max(dist2cbd)));
 density=zeros(NLENGTH*NWIDTH,length(hind));
 
@@ -60,7 +76,7 @@ vacrlts=zeros(length(hind),length(TSTART:TMAX));
 testpctdev=zeros(ERUNS,TMAX);
 VARLAYER=zeros(80*80,ERUNS);
 for mr=1:length(hind)
-    h=strcmp(sprintf('storm_%d_%d.mat',batchind(mr,1),...
+    h=strcmp(sprintf('am_parm_sweep_%d_%d.mat',50+batchind(mr,1),...
         batchind(mr,2)),fnamescell(1,:));
     filename=fnamescell{1,h};
     load(filename)
@@ -237,7 +253,7 @@ for ie=1:ERUNS
 end
 %% Create figures and results
 
-cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\figs\storm_v1
+cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\figs\am_sweep
 
 % resultsfile='baseline_results_070314.txt';
 % save(resultsfile,'avgvac','avgpctdev','-ascii')
@@ -401,3 +417,172 @@ for j=1:ERUNS
     legend('HT1','HT2','HT3','HT4','HT5','HT6','HT7','HT8');
     saveas(h7,sprintf('avgrents_%d',j),'jpg')
 end
+
+%%%% Summary plots
+% Build Time
+h_bt=figure;
+set(h_bt,'Color','white','visible','off');
+for k=1:ERUNS
+    % xaxis = lvset
+    %yaxis = am_slope
+    subtightplot(5,5,k,0.01,0.1,0.05);
+    imagesc(reshape(avgbt(:,k),NLENGTH,NWIDTH))
+    set(gca,'xticklabel',[],'yticklabel',[])
+    if isempty(find(ismember(1:5,k),1))==0
+        title(sprintf('lv(%0.2f)',double(batchparms_unq(k,2))))
+    end
+    icol=ismember([1 6 11 16 21],k);
+    if isempty(find(icol,1))==0
+        ylabel(sprintf('am(%0.3f)',double(batchparms_unq(icol,1))))
+    end
+    if k==23
+        xlabel('Build Time (baseline: (0.1,1.0)','FontSize',14)
+    end
+end
+saveas(h_bt,'summary_build_time','jpg')
+
+h_ent=figure;
+set(h_ent, 'Color','white','Visible','off');
+for b=1:ERUNS
+    subtightplot(5,5,b,0.01,0.1,0.05);
+    plot(10:30,mean(htentropy(batchruns{b},10:30),1),'--k')
+    hold on
+    plot(10:30,min(htentropy(batchruns{b},10:30),[],1),'-b','LineWidth',0.5)
+    plot(10:30,max(htentropy(batchruns{b},10:30),[],1),'-b','LineWidth',0.5)
+    if b == 25
+        set(gca,'yaxislocation','right')
+    elseif b==23
+        set(gca,'xticklabel',[],'yticklabel',[])
+        xlabel('Avg. Entropy (baseline: (0.1,1.0)','FontSize',14)
+    else
+        set(gca,'xticklabel',[],'yticklabel',[])
+    end
+    if isempty(find(ismember(1:5,b),1))==0
+        title(sprintf('lv(%0.2f)',double(batchparms_unq(b,2))))
+    end
+    icol=ismember([1 6 11 16 21],b);
+    if isempty(find(icol,1))==0
+        ylabel(sprintf('am(%0.3f)',double(batchparms_unq(icol,1))))
+    end 
+end
+saveas(h_ent,'summary_entropy','jpg')
+
+% Average Map
+h_avm=figure;
+set(h_avm,'Color','white','visible','off');
+for k=1:ERUNS
+    % xaxis = lvset
+    %yaxis = am_slope
+    subtightplot(5,5,k,0.01,0.1,0.05);
+    imagesc(AVGMAP(:,:,30,k))
+    set(gca,'xticklabel',[],'yticklabel',[])
+    if isempty(find(ismember(1:5,k),1))==0
+        title(sprintf('lv(%0.2f)',double(batchparms_unq(k,2))))
+    end
+    icol=ismember([1 6 11 16 21],k);
+    if isempty(find(icol,1))==0
+        ylabel(sprintf('am(%0.3f)',double(batchparms_unq(icol,1))))
+    end
+    if k==23
+        xlabel('Avg. Map t=30 (baseline: (0.1,1.0)','FontSize',14)
+    end
+end
+saveas(h_avm,'summary_avgmap','jpg')
+
+% avg rents
+avgrent_mat=cell(EXPTRUNS);
+incdist_mat=cell(EXPTRUNS);
+landsale_mat=cell(EXPTRUNS);
+for jj=1:ERUNS
+    % aggregate results for each parameter combo (n=30) and organize
+    % according to plotting procedure to ensure the correct assignment of
+    % results to parm settings.
+    [ic,ir]=ind2sub([EXPTRUNS EXPTRUNS],jj);
+    iruns=(matguide(:,1) == ir & matguide(:,2) == ic);
+    avgrent_mat(ir,ic)=mat2cell(median(avgrents(:,TMAX,iruns),3),HT,1);
+    incdist_mat(ir,ic)=mat2cell(histc(mdninc(mdninc(:,jj)~=0,jj),...
+        linspace(20000,200000,20)),20,1);
+    landsale_mat(ir,ic)=mat2cell(histc(unique(avglandsale(avglandsale(:,jj)~=0,jj)),...
+        linspace(min(min(avglandsale)),max(max(avglandsale)),10)),10,1);
+end
+    
+h_rent=figure;
+set(h_rent,'Color','white','visible','off');
+for a=1:ERUNS
+    % plot avgrent histogram
+    [ic,ir]=ind2sub([EXPTRUNS EXPTRUNS],a);
+    subtightplot(5,5,a,0.01,0.1,0.05);
+    bar(avgrent_mat{ir,ic})
+    axis([0.5 8.5 0 22000]);
+    if isempty(find(ismember([5 10 15 20],a),1))==0
+         set(gca,'xticklabel',[],'yaxislocation','right')
+    elseif a == 25
+        set(gca,'yaxislocation','right')
+    elseif a==23
+        set(gca,'xticklabel',[],'yticklabel',[])
+        xlabel('Avg. Rent t=30 (baseline: (0.1,1.0)','FontSize',14)
+    else
+        set(gca,'xticklabel',[],'yticklabel',[])
+    end
+    if isempty(find(ismember(1:5,a),1))==0
+        title(sprintf('lv(%0.2f)',double(batchparms_unq(a,2))))
+    end
+    icol=ismember([1 6 11 16 21],a);
+    if isempty(find(icol,1))==0
+        ylabel(sprintf('am(%0.3f)',double(batchparms_unq(icol,1))))
+    end 
+end
+
+h_inc=figure;
+set(h_inc,'visible','off');
+for a=1:ERUNS
+    % plot inc. dist. histogram
+    [ic,ir]=ind2sub([EXPTRUNS EXPTRUNS],a);
+    subtightplot(5,5,a,0.01,0.1,0.05);
+    bar(linspace(20000,200000,20),incdist_mat{ir,ic},'histc')
+    axis([10000 210000 0 750])
+    if isempty(find(ismember([5 10 15 20],a),1))==0
+         set(gca,'xticklabel',[],'yaxislocation','right')
+    elseif a == 25
+        set(gca,'yaxislocation','right')
+    elseif a==23
+        set(gca,'xticklabel',[],'yticklabel',[])
+        xlabel('Income t=30 (baseline: (0.1,1.0)','FontSize',14)
+    else
+        set(gca,'xticklabel',[],'yticklabel',[])
+    end
+    if isempty(find(ismember(1:5,a),1))==0
+        title(sprintf('lv(%0.2f)',double(batchparms_unq(a,2))))
+    end
+    icol=ismember([1 6 11 16 21],a);
+    if isempty(find(icol,1))==0
+        ylabel(sprintf('am(%0.3f)',double(batchparms_unq(icol,1))))
+    end 
+end
+saveas(h_inc,'summary_incdist','jpg')
+
+h_ls=figure;
+set(h_ls,'visible','off');
+for a=1:ERUNS
+    % plot inc. dist. histogram
+    [ic,ir]=ind2sub([EXPTRUNS EXPTRUNS],a);
+    subtightplot(5,5,a,0.01,0.1,0.05);
+    bar(linspace(min(min(avglandsale)),max(max(avglandsale)),10),landsale_mat{ir,ic},'histc')
+    axis([500 27000 0 40])
+    if a == 25
+        set(gca,'yaxislocation','right')
+    elseif a==23
+        set(gca,'xticklabel',[],'yticklabel',[])
+        xlabel('Land Sales t=30 (baseline: (0.1,1.0)','FontSize',14)
+    else
+        set(gca,'xticklabel',[],'yticklabel',[])
+    end
+    if isempty(find(ismember(1:5,a),1))==0
+        title(sprintf('lv(%0.2f)',double(batchparms_unq(a,2))))
+    end
+    icol=ismember([1 6 11 16 21],a);
+    if isempty(find(icol,1))==0
+        ylabel(sprintf('am(%0.3f)',double(batchparms_unq(icol,1))))
+    end 
+end
+saveas(h_ls,'summary_landsales','jpg')

@@ -39,7 +39,7 @@ addAttachedFiles(poolobj,{'load_expmntlparms.m','loadempdata.m',...
 
 
 %%
-for erun=11:EXPTRUNS^NPARMS
+for erun=63:EXPTRUNS^NPARMS
     
     %     rndstr.SubStream=erun;
     parfor mrun=1:MRUNS
