@@ -4,7 +4,7 @@
 clear
 tic
 
-EXPTRUNS=1;
+EXPTRUNS=4;
 MRUNS=30;
 % parpool(max(EXPTRUNS,12))
 stream=RandStream.create('mrg32k3a','Seed',13);
@@ -246,6 +246,7 @@ for erun=1:EXPTRUNS
         DAMAGE=num2cell(zeros(NCELLS,1));
         MITIGATE=cell(NCELLS,1);
         Cdam=cell([],TMAX);
+        housedam=zeros(NCELLS,1);
         
         COAST=zeros(NLENGTH,NWIDTH);
         SCAPE=zeros(NLENGTH,NWIDTH);
@@ -572,7 +573,7 @@ for erun=1:EXPTRUNS
         iscape=(SCAPE==1);
         iscapelist=find(iscape==1);
         
-        coastdist=NWIDTH+1-cumsum(SCAPE,2);
+        coastdist=reshape(NWIDTH+1-cumsum(SCAPE,2),NCELLS,1);
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%   Distance matrices   %%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -601,7 +602,7 @@ for erun=1:EXPTRUNS
         travelcost(iscapelist)=num2cell(margtc*Sdist2cbd.dist2cbd(iscapelist));
         travelcost(icoast)=num2cell(10000*ones(length(icoast),1));
         % coastprox=num2cell(reshape(10*(max(max(coastdist))+1-coastdist),NCELLS,1));
-        coastprox=num2cell(reshape(am0(erun)*1./exp(am_slope(erun)*coastdist),NCELLS,1));
+        coastprox=num2cell(am0(erun)*1./exp(am_slope(erun)*coastdist));
         % coastprox=num2cell(reshape(0.1*(max(max(coastdist))+1-coastdist),NCELLS,1));
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -610,9 +611,8 @@ for erun=1:EXPTRUNS
         %%% Probability of a hurricane of a given category making landfall in a
         %%% given year, from Costanza et al. (2008), Ambio, 37(4)
        
-        % Mid-Atlantic = Delaware, Maryland, New Jersey, North Carolina, Pennsylvania, Virginia
-        ma_storm=[0.013 0 0 0 0; 0.0065 0.0065 0 0 0; 0.013 0 0 0 0; 0.1364 0.0844 ...
-            0.0714 0.0065 0; 0.0065 0 0 0 0; 0.0584 0.013 0.0065 0 0];
+        % Mid-Atlantic = Delaware, Maryland, New Jersey, Pennsylvania, Virginia
+        ma_storm=[0.013 0 0 0 0; 0.0065 0.0065 0 0 0; 0.013 0 0 0 0; 0.0065 0 0 0 0; 0.0584 0.013 0.0065 0 0];
         nc_storm=[0.1364 0.0844 0.0714 0.0065 0];
         fl_storm=[0.2792 0.2078 0.1753 0.0390 0.0130];
         tx_storm=[0.1494 0.1104 0.0779 0.0455 0];
@@ -1632,7 +1632,7 @@ for erun=1:EXPTRUNS
             % %CONINFO=[income,searchtime,consumer_good,housesize,lotsize,proximity,subrisk,occ/vac,utility]
             
             % average damage across storm categories
-            Cdam(1:Nlots(TSTART),TSTART)=num2cell(Paskhouse.*housedam(lotchoice{:,2}));
+            Cdam(1:Nlots(TSTART),TSTART)=num2cell(Paskhouse.*(0.01*housedam(cat(1,lotchoice{:,2}))));
 %             Cdam(1:Nlots(TSTART),TSTART)=num2cell(mean((Paskhouse*housedam).*...
 %                 repmat(mean(Psevere,1),Nlots(TSTART),1).*...
 %                 repmat(cat(1,Pflood{cat(1,lotchoice{:,2})}),1,5),2));
@@ -3089,7 +3089,8 @@ for erun=1:EXPTRUNS
 %             Cdam(inewlots,t)=mat2cell(sum(Pimpact(cat(1,lotchoice{inewlots,2})).*...
 %                 repmat(housedam,length(inewlots),1).*repmat(Paskhouse(inewlots),1,5),2));
             if isempty(find(inewlots,1))==0
-                Cdam(inewlots,t)=num2cell(Paskhouse(inewlots).*housedam(lotchoice{inewlots,2}));
+                Cdam(inewlots,t)=num2cell(Paskhouse(inewlots).*(0.01*...
+                    housedam(cat(1,lotchoice{inewlots,2}))));
 %                 Cdam(inewlots,t)=num2cell(mean((Paskhouse(inewlots)*housedam).*...
 %                     repmat(mean(Psevere,1),length(inewlots),1).*...
 %                     repmat(cat(1,Pflood{cat(1,lotchoice{inewlots,2})}),1,5),2));
@@ -3807,7 +3808,7 @@ end
         
        
 %         ndate=datestr(date,'ddmmyy');
-        savefname=sprintf('storm_%d_%d.mat',erun,mrun);
+        savefname=sprintf('storm_clim%d_%d.mat',erun,mrun);
         parsave_storm(savefname,...
             consumerstats,vacstats,BUILDTIME,VACLAND,RENT,RETURN,LOTTYPE,...
             BASELAYER,Rpop,Rvacrate,Rvaclots,numlt,Rleftoverpop,avgrentdynms,...
