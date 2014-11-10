@@ -16,35 +16,35 @@ z = 1000*[0.00025    1.5000
     0.0020    2.5000];
 MRUNS=30;
 %%% ADJUST THIS!!! %%%
-NPARMS=2;
-EXPTRUNS=5;
+NPARMS=1;
+EXPTRUNS=4;
 ERUNS=EXPTRUNS^NPARMS;
 batchind=[reshape(repmat(1:ERUNS,MRUNS,1),MRUNS*ERUNS,1) ...
     repmat((1:MRUNS)',ERUNS,1)];
 batchruns=mat2cell(reshape(1:MRUNS*ERUNS,MRUNS,ERUNS),MRUNS,ones(1,ERUNS));
 
-% Experimental Parms
-am_slope=reshape(repmat(linspace(0.025,0.125,EXPTRUNS),EXPTRUNS,EXPTRUNS),...
-    1,EXPTRUNS^3);
-lvset=repmat(linspace(0.5,1.5,EXPTRUNS),1,EXPTRUNS^(3-1));
-batchparms_full=[am_slope(batchind(:,1))' lvset(batchind(:,1))'];
-batchparms_unq=[unique(batchparms_full(:,1)) unique(batchparms_full(:,2))];
-baseruns=511:540;
+% % Experimental Parms
+% am_slope=reshape(repmat(linspace(0.025,0.125,EXPTRUNS),EXPTRUNS,EXPTRUNS),...
+%     1,EXPTRUNS^3);
+% lvset=repmat(linspace(0.5,1.5,EXPTRUNS),1,EXPTRUNS^(3-1));
+% batchparms_full=[am_slope(batchind(:,1))' lvset(batchind(:,1))'];
+% batchparms_unq=[unique(batchparms_full(:,1)) unique(batchparms_full(:,2))];
+% baseruns=511:540;
+% 
+% matguide=batchparms_full;
+% for ii=1:EXPTRUNS
+% matguide(batchparms_full(:,1)==batchparms_unq(ii,1),1)=ii;
+% matguide(batchparms_full(:,2)==batchparms_unq(ii,2),2)=ii;
+% end
 
-matguide=batchparms_full;
-for ii=1:EXPTRUNS
-matguide(batchparms_full(:,1)==batchparms_unq(ii,1),1)=ii;
-matguide(batchparms_full(:,2)==batchparms_unq(ii,2),2)=ii;
-end
-
-cd X:\model_results\CHALMS_coast_am_parm_sweep
+cd X:\model_results\CHALMS_alt_storm_climate
 fnames=dir;
 fnamescell=struct2cell(fnames);
-h=strncmp('am_parm_sweep',fnamescell(1,:),13);
+h=strncmp('storm_clim',fnamescell(1,:),10);
 hind=find(h==1);
 cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\data_files
 load DIST2CBD_east
-cd X:\model_results\CHALMS_coast_am_parm_sweep
+cd X:\model_results\CHALMS_alt_storm_climate
 distpt=ceil(min(min(dist2cbd)):max(max(dist2cbd)));
 density=zeros(NLENGTH*NWIDTH,length(hind));
 
@@ -76,7 +76,7 @@ vacrlts=zeros(length(hind),length(TSTART:TMAX));
 testpctdev=zeros(ERUNS,TMAX);
 VARLAYER=zeros(80*80,ERUNS);
 for mr=1:length(hind)
-    h=strcmp(sprintf('am_parm_sweep_%d_%d.mat',50+batchind(mr,1),...
+    h=strcmp(sprintf('storm_clim%d_%d.mat',batchind(mr,1),...
         batchind(mr,2)),fnamescell(1,:));
     filename=fnamescell{1,h};
     load(filename)
@@ -253,7 +253,7 @@ for ie=1:ERUNS
 end
 %% Create figures and results
 
-cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\figs\am_sweep
+cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\figs\alt_stormclim
 
 % resultsfile='baseline_results_070314.txt';
 % save(resultsfile,'avgvac','avgpctdev','-ascii')
@@ -271,22 +271,29 @@ for j=1:ERUNS
     set(h1, 'Color','white','Position',[1,1,700,700],'Visible','off');
     subplot(2,2,1);
     imagesc(AVGMAP(:,:,15,j));
-    set(gca,'Visible','off')
+    CMAP=colormap;
+    CMAP(1,:)=[1 1 1];
+    colormap(h1,CMAP);
+%     set(gca,'Visible','off')
+    set(gca,'xticklabel',[],'yticklabel',[])
     title('t=15');
     set(get(gca,'Title'),'Visible','on')
     subplot(2,2,2);
     imagesc(AVGMAP(:,:,20,j));
-    set(gca,'Visible','off')
+%     set(gca,'Visible','off')
+    set(gca,'xticklabel',[],'yticklabel',[])
     title('t=20');
     set(get(gca,'Title'),'Visible','on')
     subplot(2,2,3);
     imagesc(AVGMAP(:,:,25,j));
-    set(gca,'Visible','off')
+%     set(gca,'Visible','off')
+    set(gca,'xticklabel',[],'yticklabel',[])
     title('t=25');
     set(get(gca,'Title'),'Visible','on')
     subplot(2,2,4);
     imagesc(AVGMAP(:,:,30,j));
-    set(gca,'Visible','off')
+    set(gca,'xticklabel',[],'yticklabel',[])
+%     set(gca,'Visible','off')
     title('t=30');
     set(get(gca,'Title'),'Visible','on')
     saveas(h1,sprintf('avg_housetypes_%d',j),'jpg')
@@ -306,13 +313,18 @@ for j=1:ERUNS
     set(h2, 'Color','white','OuterPosition',[1,1,400,700],'Visible','off');
     subplot(2,1,1);
     imagesc(reshape(mdninc(:,j),NLENGTH,NWIDTH));
-    set(gca,'Visible','off')
+    CMAP=colormap;
+    CMAP(1,:)=[1 1 1];
+    colormap(h2,CMAP);
+%     set(gca,'Visible','off')
+    set(gca,'xticklabel',[],'yticklabel',[])
     colorbar;
     title('Median Consumer Income');
     set(get(gca,'Title'),'Visible','on')
     subplot(2,1,2);
     imagesc(reshape(varinc(:,j),NLENGTH,NWIDTH));
-    set(gca,'Visible','off')
+%     set(gca,'Visible','off')
+    set(gca,'xticklabel',[],'yticklabel',[])
     colorbar;
     title('Variance in Consumer Income');
     set(get(gca,'Title'),'Visible','on')
@@ -331,13 +343,18 @@ for j=1:ERUNS
     set(h3, 'Color','white','Position',[1,1,400,700],'Visible','off');
     subplot(2,1,1);
     imagesc(reshape(avgbt(:,j),NLENGTH,NWIDTH));
-    set(gca,'Visible','off')
+    CMAP=colormap;
+    CMAP(1,:)=[1 1 1];
+    colormap(h3,CMAP);
+%     set(gca,'Visible','off')
+    set(gca,'xticklabel',[],'yticklabel',[])
     colorbar;
     title('Average Build Time');
     set(get(gca,'Title'),'Visible','on')
     subplot(2,1,2);
     imagesc(reshape(varbt(:,j),NLENGTH,NWIDTH));
-    set(gca,'Visible','off')
+%     set(gca,'Visible','off')
+    set(gca,'xticklabel',[],'yticklabel',[])
     colorbar;
     title('Variance in Build Time');
     set(get(gca,'Title'),'Visible','on')
@@ -367,13 +384,18 @@ for j=1:ERUNS
     set(h5, 'Color','white','Position',[700,300,400,700],'Visible','off');
     subplot(2,1,1);
     imagesc(reshape(avglandsale(:,j),NLENGTH,NWIDTH));
-    set(gca,'Visible','off')
+    CMAP=colormap;
+    CMAP(1,:)=[1 1 1];
+    colormap(h5,CMAP);
+%     set(gca,'Visible','off')
+    set(gca,'xticklabel',[],'yticklabel',[])
     colorbar;
     title('Average Land Sales');
     set(get(gca,'Title'),'Visible','on')
     subplot(2,1,2);
     imagesc(reshape(varlandsale(:,j),NLENGTH,NWIDTH));
-    set(gca,'Visible','off')
+%     set(gca,'Visible','off')
+    set(gca,'xticklabel',[],'yticklabel',[])
     colorbar;
     title('Variance in Land Sales');
     set(get(gca,'Title'),'Visible','on')
@@ -392,13 +414,18 @@ for j=1:ERUNS
     set(h6, 'Color','white','Position',[700,300,400,700],'Visible','off');
     subplot(2,1,1);
     imagesc(reshape(avgampref(:,j),NLENGTH,NWIDTH));
-    set(gca,'Visible','off')
+    CMAP=colormap;
+    CMAP(1,:)=[1 1 1];
+    colormap(h6,CMAP);
+%     set(gca,'Visible','off')
+    set(gca,'xticklabel',[],'yticklabel',[])
     colorbar;
     title('Mean Consumer Amenity Preference');
     set(get(gca,'Title'),'Visible','on')    
     subplot(2,1,2);
     imagesc(reshape(varampref(:,j),NLENGTH,NWIDTH));
-    set(gca,'Visible','off')
+%     set(gca,'Visible','off')
+    set(gca,'xticklabel',[],'yticklabel',[])
     colorbar;
     title('Variance in Consumer Amenity Preference');
     set(get(gca,'Title'),'Visible','on')
