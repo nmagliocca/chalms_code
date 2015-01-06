@@ -87,24 +87,25 @@ inotzoned=cat(1,ZONES{[1:2 6:8 11:13 16:18 21:22],1});
 % izoned=ismember(ZONES,[3:5 9:10 14:15 19:20 23:25]);
 % inotzoned=~ismember(ZONES,[3:5 9:10 14:15 19:20 23:25]);
 ZONEMAP(izoned)=1;
-CZONEMAP(:,50:NWIDTH)=1;
+CZONEMAP(:,1:50)=1;
+CZONEMAP(:,51:70)=2;
+CZONEMAP(:,71:NWIDTH)=3;
 unzonedacres=length(find(ZONEMAP==0));
 zonedacres=length(find(ZONEMAP==1));
-inlandacres=length(find(CZONEMAP==0));
-coastalacres=length(find(CZONEMAP==1));
-icoastal=find(CZONEMAP==1);
-iinland=find(CZONEMAP==0);
+inlandacres=length(find(CZONEMAP==1));
+middleacres=length(find(CZONEMAP==2));
+coastalacres=length(find(CZONEMAP==3));
+icoastal=find(CZONEMAP==3);
+imiddle=find(CZONEMAP==2);
+iinland=find(CZONEMAP==1);
 
 northindex=find(ZONEMAP==0);
 southindex=find(ZONEMAP==1);
 
-coastindex=find(CZONEMAP==1);
-inlandindex=find(CZONEMAP==0);
-
 cd X:\model_results\CHALMS_alt_storm_climate
 fnames=dir;
 fnamescell=struct2cell(fnames);
-h=strncmp('storm_clim4',fnamescell(1,:),11);
+h=strncmp('storm_clim3',fnamescell(1,:),11);
 hind=find(h==1);
 cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\data_files
 load DIST2CBD_east
@@ -225,6 +226,14 @@ crentmuci=zeros(2,HT,length(testtime));
 crentsigmaci=zeros(2,HT,length(testtime));
 crentse=zeros(HT,length(testtime));
 
+middlerents=zeros(HT,length(testtime),length(hind));
+midrentstats=zeros(HT,5,length(testtime));
+midrentmu=zeros(HT,length(testtime));
+midrentsigma=zeros(HT,length(testtime));
+midrentmuci=zeros(2,HT,length(testtime));
+midrentsigmaci=zeros(2,HT,length(testtime));
+midrentse=zeros(HT,length(testtime));
+
 inlandrents=zeros(HT,length(testtime),length(hind));
 inrentstats=zeros(HT,5,length(testtime));
 inrentmu=zeros(HT,length(testtime));
@@ -264,6 +273,13 @@ coastlotmuci=zeros(2,HT,length(testtime));
 coastlotsigmaci=zeros(2,HT,length(testtime));
 coastlotse=zeros(HT,length(testtime));
 
+middlelotstats=zeros(HT,5,length(testtime));
+middlelotmu=zeros(HT,length(testtime));
+middlelotsigma=zeros(HT,length(testtime));
+middlelotmuci=zeros(2,HT,length(testtime));
+middlelotsigmaci=zeros(2,HT,length(testtime));
+middlelotse=zeros(HT,length(testtime));
+
 inlandlotstats=zeros(HT,5,length(testtime));
 inlandlotmu=zeros(HT,length(testtime));
 inlandlotsigma=zeros(HT,length(testtime));
@@ -296,7 +312,7 @@ czonedensigmaci=zeros(2,HT);
 czonedense=zeros(HT,1);
 
 zoneavgpricestats=zeros(2,5);
-czoneavgpricestats=zeros(2,5);
+czoneavgpricestats=zeros(3,5);
 overplandstats=zeros(1,5);
 
 unzonedpctdev=zeros(length(testtime),length(hind));
@@ -305,10 +321,12 @@ zonednumlots=zeros(HT,length(testtime),length(hind));
 unzonednumlots=zeros(HT,length(testtime),length(hind));
 zoneavgprice=zeros(2,length(hind));
 coastalpctdev=zeros(length(testtime),length(hind));
+middlepctdev=zeros(length(testtime),length(hind));
 inlandpctdev=zeros(length(testtime),length(hind));
 inlandnumlots=zeros(HT,length(testtime),length(hind));
 coastalnumlots=zeros(HT,length(testtime),length(hind));
-czoneavgprice=zeros(2,length(hind));
+middlenumlots=zeros(HT,length(testtime),length(hind));
+czoneavgprice=zeros(3,length(hind));
 overpland=zeros(1,length(hind));
 incomerlts=zeros(length(testtime),length(hind));
 outincomerlts=zeros(length(testtime),length(hind));
@@ -316,6 +334,7 @@ outincomerlts=zeros(length(testtime),length(hind));
 northincome=zeros(length(testtime),length(hind));
 southincome=zeros(length(testtime),length(hind));
 coastalincome=zeros(length(testtime),length(hind));
+middleincome=zeros(length(testtime),length(hind));
 inlandincome=zeros(length(testtime),length(hind));
 
 % zonedenstats=zeros(HT,length(testtime));
@@ -355,6 +374,13 @@ coastpctdevmuci=zeros(2,length(testtime));
 coastpctdevsigmaci=zeros(2,length(testtime));
 coastpctdevse=zeros(length(testtime),1);
 
+middlepctdevstats=zeros(length(testtime),5);
+middlepctdevmu=zeros(length(testtime),1);
+middlepctdevsigma=zeros(length(testtime),1);
+middlepctdevmuci=zeros(2,length(testtime));
+middlepctdevsigmaci=zeros(2,length(testtime));
+middlepctdevse=zeros(length(testtime),1);
+
 inlandpctdevstats=zeros(length(testtime),5);
 inlandpctdevmu=zeros(length(testtime),1);
 inlandpctdevsigma=zeros(length(testtime),1);
@@ -389,6 +415,13 @@ coastincomesigma=zeros(length(testtime),1);
 coastincomemuci=zeros(2,length(testtime));
 coastincomesigmaci=zeros(2,length(testtime));
 coastincomese=zeros(length(testtime),1);
+
+middleincomestats=zeros(length(testtime),5);
+middleincomemu=zeros(length(testtime),1);
+middleincomesigma=zeros(length(testtime),1);
+middleincomemuci=zeros(2,length(testtime));
+middleincomesigmaci=zeros(2,length(testtime));
+middleincomese=zeros(length(testtime),1);
 
 inlandincomestats=zeros(length(testtime),5);
 inlandincomemu=zeros(length(testtime),1);
@@ -476,7 +509,7 @@ pctdevdist_c=zeros(size(avglotsize));
 houseperacre_c=zeros(size(avglotsize));
 meandispersion=zeros(length(hind),1);
 plandzone=zeros(2,length(timeset));
-plandzone_c=zeros(2,length(timeset));
+plandzone_c=zeros(3,length(timeset));
 
 
 fullnumlots=zeros(HT,length(TSTART:TMAX),length(hind));
@@ -489,7 +522,7 @@ for mr=1:length(hind)
 %     load(eval('filename'))
 %     h=strcmp(sprintf('storm_clim2_%d.mat',batchind(mr,1),...
 %         batchind(mr,2)),fnamescell(1,:));
-    h=strcmp(sprintf('storm_clim4_%d.mat',mr),fnamescell(1,:));
+    h=strcmp(sprintf('storm_clim3_%d.mat',mr),fnamescell(1,:));
     filename=fnamescell{1,h};
     load(filename)
     
@@ -629,6 +662,9 @@ for mr=1:length(hind)
     outzoned=outzoned(outzoned~=0);
     
     coastzoned=unique(setupmap(icoastal));
+    coastzoned=coastzoned(coastzoned~=0);
+    middlezoned=unique(setupmap(imiddle));
+    middlezoned=middlezoned(middlezoned~=0);
     inlandzoned=unique(setupmap(iinland));
     inlandzoned=inlandzoned(inlandzoned~=0);
     
@@ -672,6 +708,7 @@ for mr=1:length(hind)
         unzonedpctdev(tt,mr)=length(find(subbaselayer(inotzoned)==1))/unzonedacres;
         zonedpctdev(tt,mr)=length(find(subbaselayer(izoned)==1))/zonedacres;
         coastalpctdev(tt,mr)=length(find(subbaselayer(icoastal)==1))/coastalacres;
+        middlepctdev(tt,mr)=length(find(subbaselayer(imiddle)==1))/middleacres;
         inlandpctdev(tt,mr)=length(find(subbaselayer(iinland)==1))/inlandacres;
 %         incomerlts(tt,mr)=consumerstats(1,testtime(tt));
         incomerlts(tt,mr)=mean(subincome(Rbaselayer==1));
@@ -697,7 +734,8 @@ for mr=1:length(hind)
         for lt=1:HT
             ilots=find(subzonelots==lt);
             inorthlots=ismember(ilots,northindex);
-            icoastlots=ismember(ilots,coastindex);
+            icoastlots=ismember(ilots,icoastal);
+            imiddlelots=ismember(ilots,imiddle);
             if isempty(find(inorthlots,1))==0
                 if tt==1
                     northrents(lt,tt,mr)=avgrent(lt,testtime(tt));
@@ -712,11 +750,18 @@ for mr=1:length(hind)
                     coastrents(lt,tt,mr)=mean(subzonerents(ilots(icoastlots)));
                 end
             end
+            if isempty(find(imiddlelots,1))==0
+                if tt==1
+                    middlerents(lt,tt,mr)=avgrent(lt,testtime(tt));
+                else
+                    middlerents(lt,tt,mr)=mean(subzonerents(ilots(imiddlelots)));
+                end
+            end
             isouthlots=ismember(ilots,southindex);
             if isempty(find(isouthlots,1))==0
                 southrents(lt,tt,mr)=mean(subzonerents(ilots(isouthlots)));
             end
-            iinlandlots=ismember(ilots,inlandindex);
+            iinlandlots=ismember(ilots,iinland);
             if isempty(find(iinlandlots,1))==0
                 inlandrents(lt,tt,mr)=mean(subzonerents(ilots(iinlandlots)));
             end
@@ -729,6 +774,7 @@ for mr=1:length(hind)
             unzonednumlots(lt,tt,mr)=length(find(sublotsmap(inotzoned)==lt))/z(lt,1);
             zonednumlots(lt,tt,mr)=length(find(sublotsmap(izoned)==lt))/z(lt,1);
             coastalnumlots(lt,tt,mr)=length(find(sublotsmap(icoastal)==lt))/z(lt,1);
+            middlenumlots(lt,tt,mr)=length(find(sublotsmap(imiddle)==lt))/z(lt,1);
             inlandnumlots(lt,tt,mr)=length(find(sublotsmap(iinland)==lt))/z(lt,1);
             sublottypemap=lottypemap(:,:,lt,tt);
             ilottypemap=(LOTTYPE(:,testtime(tt))==lt);
@@ -754,6 +800,10 @@ for mr=1:length(hind)
             icoastltsize=lotsizemap(icoastal);
             coastalincome(tt,mr)=mean(sum(icoastincome(icoastincome~=0).*...
                 (1./icoastltsize(icoastincome~=0)))/sum(1./icoastltsize(icoastincome~=0)));
+            imiddleincome=subincome(imiddle);
+            imiddleltsize=lotsizemap(imiddle);
+            middleincome(tt,mr)=mean(sum(imiddleincome(imiddleincome~=0).*...
+                (1./imiddleltsize(imiddleincome~=0)))/sum(1./imiddleltsize(imiddleincome~=0)));
             iinlandincome=subincome(iinland);
             iinlandltsize=lotsizemap(iinland);
             inlandincome(tt,mr)=mean(sum(iinlandincome(iinlandincome~=0).*...
@@ -767,8 +817,9 @@ for mr=1:length(hind)
     
     zoneavgprice(1,mr)=mean(farmsoldinfo(ismember(farmsoldinfo(:,1),outzoned),4));
     zoneavgprice(2,mr)=mean(farmsoldinfo(ismember(farmsoldinfo(:,1),inzoned),4));
-    czoneavgprice(1,mr)=mean(farmsoldinfo(ismember(farmsoldinfo(:,1),coastzoned),4));
-    czoneavgprice(2,mr)=mean(farmsoldinfo(ismember(farmsoldinfo(:,1),inlandzoned),4));
+    czoneavgprice(3,mr)=mean(farmsoldinfo(ismember(farmsoldinfo(:,1),coastzoned),4));
+    czoneavgprice(2,mr)=mean(farmsoldinfo(ismember(farmsoldinfo(:,1),middlezoned),4));
+    czoneavgprice(1,mr)=mean(farmsoldinfo(ismember(farmsoldinfo(:,1),inlandzoned),4));
 
 %     acrewght=zeros([],1);
     nfacres=zeros([],1);
@@ -981,10 +1032,13 @@ southfarmers=unique(setupmap(ZONEMAP==1));
 inorthfarmers=ismember(plandinfo(:,1),northfarmers);
 isouthfarmers=ismember(plandinfo(:,1),southfarmers);
 
-coastfarmers=unique(setupmap(CZONEMAP==1));
+coastfarmers=unique(setupmap(CZONEMAP==3));
 coastfarmers=coastfarmers(coastfarmers~=0);
-inlandfarmers=unique(setupmap(CZONEMAP==0));
+middlefarmers=unique(setupmap(CZONEMAP==2));
+middlefarmers=middlefarmers(middlefarmers~=0);
+inlandfarmers=unique(setupmap(CZONEMAP==1));
 icoastfarmers=ismember(plandinfo(:,1),coastfarmers);
+imiddlefarmers=ismember(plandinfo(:,1),middlefarmers);
 iinlandfarmers=ismember(plandinfo(:,1),inlandfarmers);
 
 
@@ -1017,9 +1071,11 @@ for pt=1:20
    plandzone(2,pt)=mean(plandinfo(isfarm==1,3));
    
    icfarm=icoastfarmers.*itimeset;
+   imidfarm=imiddlefarmers.*itimeset;
    iinfarm=iinlandfarmers.*itimeset;
-   plandzone_c(1,pt)=mean(plandinfo(icfarm==1,3));
-   plandzone_c(2,pt)=mean(plandinfo(iinfarm==1,3));
+   plandzone_c(3,pt)=mean(plandinfo(icfarm==1,3));
+   plandzone_c(2,pt)=mean(plandinfo(imidfarm==1,3));
+   plandzone_c(1,pt)=mean(plandinfo(iinfarm==1,3));
    
 %    avgplandtime(pt,2)=mean(plandinfo(itimeset,3).*plandinfo(itimeset,5));
    avgplandtime(pt,2)=sum(plandinfo(itimeset,3).*plandinfo(itimeset,5))/...
@@ -1100,10 +1156,14 @@ for tt=1:length(testtime)
         
         subcoastrents(1:length(hind))=coastrents(lt,tt,:);
         iposcoastrents=(subcoastrents~=0);
+        submiddlerents(1:length(hind))=middlerents(lt,tt,:);
+        iposmiddlerents=(submiddlerents~=0);
         subinlandrents(1:length(hind))=inlandrents(lt,tt,:);
         iposinlandrents=(subinlandrents~=0);
         subcoastlots(1:length(hind))=coastalnumlots(lt,tt,:);
         iposcoastlots=(subcoastlots~=0);
+        submiddlelots(1:length(hind))=middlenumlots(lt,tt,:);
+        iposmiddlelots=(submiddlelots~=0);
         subinlandlots(1:length(hind))=inlandnumlots(lt,tt,:);
         iposinlandlots=(subinlandlots~=0);
         
@@ -1123,6 +1183,10 @@ for tt=1:length(testtime)
         [crentmu(lt,tt),crentsigma(lt,tt),crentmuci(:,lt,tt),crentsigmaci(:,lt,tt)]=normfit(subcoastrents(iposcoastrents));
         crentmu(lt,tt)=sum(subcoastrents(iposcoastrents).*subcoastlots(iposcoastrents))/sum(subcoastlots(iposcoastrents));
         crentse(lt,tt)=crentsigma(lt,tt)/sqrt(length(subcoastrents(iposcoastrents)));
+        
+        [midrentmu(lt,tt),midrentsigma(lt,tt),midrentmuci(:,lt,tt),midrentsigmaci(:,lt,tt)]=normfit(submiddlerents(iposmiddlerents));
+        midrentmu(lt,tt)=sum(submiddlerents(iposmiddlerents).*submiddlelots(iposmiddlerents))/sum(submiddlelots(iposmiddlerents));
+        midrentse(lt,tt)=midrentsigma(lt,tt)/sqrt(length(submiddlerents(iposmiddlerents)));
         
         [inrentmu(lt,tt),inrentsigma(lt,tt),inrentmuci(:,lt,tt),inrentsigmaci(:,lt,tt)]=normfit(subinlandrents(iposinlandrents));
         inrentmu(lt,tt)=sum(subinlandrents(iposinlandrents).*subinlandlots(iposinlandrents))/sum(subinlandlots(iposinlandrents));
@@ -1145,9 +1209,12 @@ for tt=1:length(testtime)
         zonedlotse(lt,tt)=zonedlotsigma(lt,tt)/sqrt(length(subzonednumlots));
         
         subcoastalnumlots(1:length(hind))=coastalnumlots(lt,tt,:);
+        submiddlenumlots(1:length(hind))=middlenumlots(lt,tt,:);
         subinlandnumlots(1:length(hind))=inlandnumlots(lt,tt,:);
         [coastlotmu(lt,tt),coastlotsigma(lt,tt),coastlotmuci(:,lt,tt),coastlotsigmaci(:,lt,tt)]=normfit(subcoastalnumlots);        
         coastlotse(lt,tt)=coastlotsigma(lt,tt)/sqrt(length(coastalnumlots));
+        [middlelotmu(lt,tt),middlelotsigma(lt,tt),middlelotmuci(:,lt,tt),middlelotsigmaci(:,lt,tt)]=normfit(submiddlenumlots);        
+        middlelotse(lt,tt)=middlelotsigma(lt,tt)/sqrt(length(middlenumlots));
         [inlandlotmu(lt,tt),inlandlotsigma(lt,tt),inlandlotmuci(:,lt,tt),inlandlotsigmaci(:,lt,tt)]=normfit(subinlandnumlots);        
         inlandlotse(lt,tt)=inlandlotsigma(lt,tt)/sqrt(length(inlandnumlots));
     end
@@ -1168,6 +1235,7 @@ for tt=1:length(testtime)
     srentstats(:,:,tt)=max([srentmu(:,tt),srentsigma(:,tt),srentmuci(1,:,tt)',srentmuci(2,:,tt)',srentse(:,tt)],0);
        
     crentstats(:,:,tt)=max([crentmu(:,tt),crentsigma(:,tt),crentmuci(1,:,tt)',crentmuci(2,:,tt)',crentse(:,tt)],0);
+    midrentstats(:,:,tt)=max([midrentmu(:,tt),midrentsigma(:,tt),midrentmuci(1,:,tt)',midrentmuci(2,:,tt)',midrentse(:,tt)],0);
     inrentstats(:,:,tt)=max([inrentmu(:,tt),inrentsigma(:,tt),inrentmuci(1,:,tt)',inrentmuci(2,:,tt)',inrentse(:,tt)],0);
 
     
@@ -1179,6 +1247,7 @@ for tt=1:length(testtime)
     zonedlotstats(:,:,tt)=max([zonedlotmu(:,tt),zonedlotsigma(:,tt),zonedlotmuci(1,:,tt)',zonedlotmuci(2,:,tt)',zonedlotse(:,tt)],0);
     
     coastlotstats(:,:,tt)=max([coastlotmu(:,tt),coastlotsigma(:,tt),coastlotmuci(1,:,tt)',coastlotmuci(2,:,tt)',coastlotse(:,tt)],0);
+    middlelotstats(:,:,tt)=max([middlelotmu(:,tt),middlelotsigma(:,tt),middlelotmuci(1,:,tt)',middlelotmuci(2,:,tt)',middlelotse(:,tt)],0);
     inlandlotstats(:,:,tt)=max([inlandlotmu(:,tt),inlandlotsigma(:,tt),inlandlotmuci(1,:,tt)',inlandlotmuci(2,:,tt)',inlandlotse(:,tt)],0);
 
     [lotsummu(tt),lotsumsigma(tt),lotsummuci(:,tt),lotsumsigmaci(:,tt)]=normfit(lotsumrlts(tt,:));
@@ -1205,6 +1274,10 @@ for tt=1:length(testtime)
     coastincomese(tt)=coastincomesigma(tt)/sqrt(length(hind));
     coastincomestats(tt,:)=max([coastincomemu(tt),coastincomesigma(tt),coastincomemuci(1,tt),coastincomemuci(2,tt),coastincomese(tt)],0);
     
+    [middleincomemu(tt),middleincomesigma(tt),middleincomemuci(:,tt),middleincomesigmaci(:,tt)]=normfit(middleincome(tt,:));
+    middleincomese(tt)=middleincomesigma(tt)/sqrt(length(hind));
+    middleincomestats(tt,:)=max([middleincomemu(tt),middleincomesigma(tt),middleincomemuci(1,tt),middleincomemuci(2,tt),middleincomese(tt)],0);
+    
     [inlandincomemu(tt),inlandincomesigma(tt),inlandincomemuci(:,tt),inlandincomesigmaci(:,tt)]=normfit(inlandincome(tt,:));
     inlandincomese(tt)=inlandincomesigma(tt)/sqrt(length(hind));
     inlandincomestats(tt,:)=max([inlandincomemu(tt),inlandincomesigma(tt),inlandincomemuci(1,tt),inlandincomemuci(2,tt),inlandincomese(tt)],0);
@@ -1225,6 +1298,10 @@ for tt=1:length(testtime)
     coastpctdevse(tt)=coastpctdevsigma(tt)/sqrt(length(hind));
     coastpctdevstats(tt,:)=max([coastpctdevmu(tt),coastpctdevsigma(tt),coastpctdevmuci(1,tt),coastpctdevmuci(2,tt),coastpctdevse(tt)],0);
     
+    [middlepctdevmu(tt),middlepctdevsigma(tt),middlepctdevmuci(:,tt),middlepctdevsigmaci(:,tt)]=normfit(middlepctdev(tt,:));
+    middlepctdevse(tt)=middlepctdevsigma(tt)/sqrt(length(hind));
+    middlepctdevstats(tt,:)=max([middlepctdevmu(tt),middlepctdevsigma(tt),middlepctdevmuci(1,tt),middlepctdevmuci(2,tt),middlepctdevse(tt)],0);
+   
     [inlandpctdevmu(tt),inlandpctdevsigma(tt),inlandpctdevmuci(:,tt),inlandpctdevsigmaci(:,tt)]=normfit(inlandpctdev(tt,:));
     inlandpctdevse(tt)=inlandpctdevsigma(tt)/sqrt(length(hind));
     inlandpctdevstats(tt,:)=max([inlandpctdevmu(tt),inlandpctdevsigma(tt),inlandpctdevmuci(1,tt),inlandpctdevmuci(2,tt),inlandpctdevse(tt)],0);
@@ -1261,12 +1338,17 @@ dispstats=max([dispmu,dispsigma,dispmuci(1),dispmuci(2),dispse],0);
 distse=distsigma/sqrt(length(hind));
 diststats=max([distmu,distsigma,distmuci(1),distmuci(2),distse],0);
 
-[coastpricemu,coastpricesigma,coastpricemuci,coastpricesigmaci]=normfit(czoneavgprice(1,:));
+[coastpricemu,coastpricesigma,coastpricemuci,coastpricesigmaci]=normfit(czoneavgprice(3,:));
 coastpricese=coastpricesigma/sqrt(length(hind));
-czoneavgpricestats(1,:)=max([coastpricemu,coastpricesigma,coastpricemuci(1),coastpricemuci(2),coastpricese],0);
-[inlandpricemu,inlandpricesigma,inlandpricemuci,inlandpricesigmaci]=normfit(czoneavgprice(2,:));
+czoneavgpricestats(3,:)=max([coastpricemu,coastpricesigma,coastpricemuci(1),coastpricemuci(2),coastpricese],0);
+
+[middlepricemu,middlepricesigma,middlepricemuci,middlepricesigmaci]=normfit(czoneavgprice(2,:));
+middlepricese=middlepricesigma/sqrt(length(hind));
+czoneavgpricestats(2,:)=max([middlepricemu,middlepricesigma,middlepricemuci(1),middlepricemuci(2),middlepricese],0);
+
+[inlandpricemu,inlandpricesigma,inlandpricemuci,inlandpricesigmaci]=normfit(czoneavgprice(1,:));
 inlandpricese=inlandpricesigma/sqrt(length(hind));
-czoneavgpricestats(2,:)=max([inlandpricemu,inlandpricesigma,inlandpricemuci(1),inlandpricemuci(2),inlandpricese],0);
+czoneavgpricestats(1,:)=max([inlandpricemu,inlandpricesigma,inlandpricemuci(1),inlandpricemuci(2),inlandpricese],0);
     
 [unzonedpricemu,unzonedpricesigma,unzonedpricemuci,unzonedpricesigmaci]=normfit(zoneavgprice(1,:));
 unzonedpricese=unzonedpricesigma/sqrt(length(hind));
@@ -1312,18 +1394,21 @@ incomelabel={'Mean Income of Occupants'};
 northincomelabel={'Mean Income of Occupants in Unzoned Region'};
 southincomelabel={'Mean Income of Occupants in Zoned Region'};
 coastincomelabel={'Mean Income of Occupants in Coastal Zone'};
+middleincomelabel={'Mean Income of Occupants in Midland Zone'};
 inlandincomelabel={'Mean Income of Occupants in Inland Zone'};
 outincomelabel={'Mean Income of Ex-occupants'};
 zonedpctdevlabel={'Pct. Dev. in Zoned Region'};
 unzonedpctdevlabel={'Pct. Dev. in Unzoned Region'};
 coastalpctdevlabel={'Pct. Dev. in Coastal Region'};
+middlepctdevlabel={'Pct. Dev. in Midland Region'};
 inlandpctdevlabel={'Pct. Dev. in Inland Region'};
 maxdistlabel={'Max Linear Distance of Development'};
 zonepricelabel={'Mean Land Price by Zoning Region'};
-coastpricelabel={'Mean Land Price by Coast/Inland Region'};
+coastpricelabel={'Mean Land Price by Coast/Midland/Inland Region'};
 northlabel={'North'};
 southlabel={'South'};
 coastlabel={'Coastal'};
+middlelabel={'Midland'};
 inlandlabel={'Inland'};
 % psoldlabel={'Mean Agricultural Return'};
 pfarmlabel={'Mean Agricultural Return'};
@@ -1354,7 +1439,7 @@ carrycostlabel={'Carrying Cost'};
 
 %% Write time step file %%
 cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\results\alt_storm_climate
-resultsfile=('Results_CHALMS_alt_storm_clim4.xlsx');
+resultsfile=('Results_CHALMS_alt_storm_clim3.xlsx');
 xlswrite(resultsfile,timelabel,'Time Step Stats','B1');
 xlswrite(resultsfile,testtime(1),'Time Step Stats','C1');
 xlswrite(resultsfile,testtime(2),'Time Step Stats','I1');
@@ -1444,9 +1529,13 @@ xlswrite(resultsfile,coastalpctdevlabel,'Landscape Results','W1');
 xlswrite(resultsfile,statlabel,'Landscape Results','W2');
 xlswrite(resultsfile,coastpctdevstats,'Landscape Results','W3');
 xlswrite(resultsfile,testtime','Landscape Results','V11');
-xlswrite(resultsfile,inlandpctdevlabel,'Landscape Results','W9');
+xlswrite(resultsfile,middlepctdevlabel,'Landscape Results','W9');
 xlswrite(resultsfile,statlabel,'Landscape Results','W10');
-xlswrite(resultsfile,inlandpctdevstats,'Landscape Results','W11');
+xlswrite(resultsfile,middlepctdevstats,'Landscape Results','W11');
+xlswrite(resultsfile,testtime','Landscape Results','V19');
+xlswrite(resultsfile,inlandpctdevlabel,'Landscape Results','W17');
+xlswrite(resultsfile,statlabel,'Landscape Results','W18');
+xlswrite(resultsfile,inlandpctdevstats,'Landscape Results','W19');
 
 xlswrite(resultsfile,testtime','Landscape Results','H20');
 xlswrite(resultsfile,incomelabel,'Landscape Results','I18');
@@ -1465,8 +1554,9 @@ xlswrite(resultsfile,zoneavgpricestats,'Landscape Results','B26');
 
 xlswrite(resultsfile,coastpricelabel,'Landscape Results','B29');
 xlswrite(resultsfile,statlabel,'Landscape Results','B30');
-xlswrite(resultsfile,coastlabel,'Landscape Results','A31');
-xlswrite(resultsfile,inlandlabel,'Landscape Results','A32');
+xlswrite(resultsfile,inlandlabel,'Landscape Results','A31');
+xlswrite(resultsfile,middlelabel,'Landscape Results','A32');
+xlswrite(resultsfile,coastlabel,'Landscape Results','A33');
 xlswrite(resultsfile,czoneavgpricestats,'Landscape Results','B31');
 
 xlswrite(resultsfile,overplandlabel,'Landscape Results','B34');
@@ -1486,28 +1576,32 @@ xlswrite(resultsfile,coastincomelabel,'Landscape Results','P18');
 xlswrite(resultsfile,statlabel,'Landscape Results','P19');
 xlswrite(resultsfile,testtime','Landscape Results','O20');
 xlswrite(resultsfile,coastincomestats,'Landscape Results','P20');
-xlswrite(resultsfile,inlandincomelabel,'Landscape Results','P26');
+xlswrite(resultsfile,middleincomelabel,'Landscape Results','P26');
 xlswrite(resultsfile,statlabel,'Landscape Results','P27');
 xlswrite(resultsfile,testtime','Landscape Results','O28');
-xlswrite(resultsfile,inlandincomestats,'Landscape Results','P28');
+xlswrite(resultsfile,middleincomestats,'Landscape Results','P28');
+xlswrite(resultsfile,inlandincomelabel,'Landscape Results','P34');
+xlswrite(resultsfile,statlabel,'Landscape Results','P35');
+xlswrite(resultsfile,testtime','Landscape Results','O36');
+xlswrite(resultsfile,inlandincomestats,'Landscape Results','P36');
 
-xlswrite(resultsfile,distlabel,'Landscape Results','B39');
-xlswrite(resultsfile,lotsizelabel,'Landscape Results','A41');
-xlswrite(resultsfile,finedistances,'Landscape Results','B40');
-xlswrite(resultsfile,meanlotsize,'Landscape Results','B41');
-xlswrite(resultsfile,hpaclabel,'Landscape Results','A42');
-xlswrite(resultsfile,meanhouseperacre,'Landscape Results','B42');
-xlswrite(resultsfile,pllabel,'Landscape Results','A43');
-xlswrite(resultsfile,meanplandint,'Landscape Results','B43');
+xlswrite(resultsfile,distlabel,'Landscape Results','B41');
+xlswrite(resultsfile,lotsizelabel,'Landscape Results','A43');
+xlswrite(resultsfile,finedistances,'Landscape Results','B42');
+xlswrite(resultsfile,meanlotsize,'Landscape Results','B43');
+xlswrite(resultsfile,hpaclabel,'Landscape Results','A44');
+xlswrite(resultsfile,meanhouseperacre,'Landscape Results','B44');
+xlswrite(resultsfile,pllabel,'Landscape Results','A45');
+xlswrite(resultsfile,meanplandint,'Landscape Results','B45');
 
-xlswrite(resultsfile,distlabel_c,'Landscape Results','B45');
-xlswrite(resultsfile,lotsizelabel,'Landscape Results','A47');
-xlswrite(resultsfile,finedistances,'Landscape Results','B46');
-xlswrite(resultsfile,meanlotsize_c,'Landscape Results','B47');
-xlswrite(resultsfile,hpaclabel,'Landscape Results','A48');
-xlswrite(resultsfile,meanhouseperacre_c,'Landscape Results','B48');
-xlswrite(resultsfile,pllabel,'Landscape Results','A49');
-xlswrite(resultsfile,meanplandint_c,'Landscape Results','B49');
+xlswrite(resultsfile,distlabel_c,'Landscape Results','B47');
+xlswrite(resultsfile,lotsizelabel,'Landscape Results','A49');
+xlswrite(resultsfile,finedistances,'Landscape Results','B48');
+xlswrite(resultsfile,meanlotsize_c,'Landscape Results','B49');
+xlswrite(resultsfile,hpaclabel,'Landscape Results','A50');
+xlswrite(resultsfile,meanhouseperacre_c,'Landscape Results','B50');
+xlswrite(resultsfile,pllabel,'Landscape Results','A51');
+xlswrite(resultsfile,meanplandint_c,'Landscape Results','B51');
 
 xlswrite(resultsfile,timelabel,'North Results','B1');
 xlswrite(resultsfile,testtime(1),'North Results','C1');
@@ -1590,6 +1684,33 @@ xlswrite(resultsfile,coastlotstats(:,:,3),'Coastal Results','O12');
 xlswrite(resultsfile,coastlotstats(:,:,4),'Coastal Results','U12');
 xlswrite(resultsfile,coastlotstats(:,:,5),'Coastal Results','AA12');
 
+xlswrite(resultsfile,timelabel,'Midland Results','B1');
+xlswrite(resultsfile,testtime(1),'Midland Results','C1');
+xlswrite(resultsfile,testtime(2),'Midland Results','I1');
+xlswrite(resultsfile,testtime(3),'Midland Results','O1');
+xlswrite(resultsfile,testtime(4),'Midland Results','U1');
+xlswrite(resultsfile,testtime(5),'Midland Results','AA1');
+xlswrite(resultsfile,lottypelabel,'Midland Results','B2');
+xlswrite(resultsfile,statlabel,'Midland Results','C2');
+xlswrite(resultsfile,statlabel,'Midland Results','I2');
+xlswrite(resultsfile,statlabel,'Midland Results','O2');
+xlswrite(resultsfile,statlabel,'Midland Results','U2');
+xlswrite(resultsfile,statlabel,'Midland Results','AA2');
+xlswrite(resultsfile,rentlabel,'Midland Results','A3');
+xlswrite(resultsfile,lotlabel,'Midland Results','A12');
+xlswrite(resultsfile,lottypeset,'Midland Results','B3');
+xlswrite(resultsfile,lottypeset,'Midland Results','B12');
+xlswrite(resultsfile,midrentstats(:,:,1),'Midland Results','C3');
+xlswrite(resultsfile,midrentstats(:,:,2),'Midland Results','I3');
+xlswrite(resultsfile,midrentstats(:,:,3),'Midland Results','O3');
+xlswrite(resultsfile,midrentstats(:,:,4),'Midland Results','U3');
+xlswrite(resultsfile,midrentstats(:,:,5),'Midland Results','AA3');
+xlswrite(resultsfile,middlelotstats(:,:,1),'Midland Results','C12');
+xlswrite(resultsfile,middlelotstats(:,:,2),'Midland Results','I12');
+xlswrite(resultsfile,middlelotstats(:,:,3),'Midland Results','O12');
+xlswrite(resultsfile,middlelotstats(:,:,4),'Midland Results','U12');
+xlswrite(resultsfile,middlelotstats(:,:,5),'Midland Results','AA12');
+
 xlswrite(resultsfile,timelabel,'Inland Results','B1');
 xlswrite(resultsfile,testtime(1),'Inland Results','C1');
 xlswrite(resultsfile,testtime(2),'Inland Results','I1');
@@ -1603,7 +1724,7 @@ xlswrite(resultsfile,statlabel,'Inland Results','O2');
 xlswrite(resultsfile,statlabel,'Inland Results','U2');
 xlswrite(resultsfile,statlabel,'Inland Results','AA2');
 xlswrite(resultsfile,rentlabel,'Inland Results','A3');
-xlswrite(resultsfile,lotlabel,'Inland Results','A22');
+xlswrite(resultsfile,lotlabel,'Inland Results','A12');
 xlswrite(resultsfile,lottypeset,'Inland Results','B3');
 xlswrite(resultsfile,lottypeset,'Inland Results','B12');
 xlswrite(resultsfile,inrentstats(:,:,1),'Inland Results','C3');
