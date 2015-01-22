@@ -1,6 +1,12 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%   Read-in results files   %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   This code is written to ingest saved results files from individual
+%   model runs, extract targeted statistics, and compile those statistics
+%   for visualization and printing to output files (e.g., .csv, .xlsx).
+
+% Reproduce parameters from model so that resutls can be processed
+% independently from model runs
 NLENGTH=80;
 NWIDTH=80;
 NCELLS=NLENGTH*NWIDTH;
@@ -15,16 +21,20 @@ z = 1000*[0.00025    1.5000
     0.0010    2.5000
     0.0020    1.5000
     0.0020    2.5000];
+% number of model iterations
 MRUNS=30;
-%%% ADJUST THIS!!! %%%
+% number of experimental parameters
 NPARMS=1;
+% number of experimental variatons on NPARMS
 EXPTRUNS=4;
 ERUNS=EXPTRUNS^NPARMS;
+% index numbers of storm climate settings and 1:MRUNS model runs
 batchind=[reshape(repmat(1:ERUNS,MRUNS,1),MRUNS*ERUNS,1) ...
     repmat((1:MRUNS)',ERUNS,1)];
 batchruns=mat2cell(reshape(1:MRUNS*ERUNS,MRUNS,ERUNS),MRUNS,ones(1,ERUNS));
 
-% Experimental Parms
+% Experimental settings
+% storm cliamte settings
 ma_storm=[0.013 0 0 0 0; 0.0065 0.0065 0 0 0; 0.013 0 0 0 0; 0.0065 0 0 0 0; 0.0584 0.013 0.0065 0 0];
 nc_storm=[0.1364 0.0844 0.0714 0.0065 0];
 fl_storm=[0.2792 0.2078 0.1753 0.0390 0.0130];
@@ -39,27 +49,23 @@ stormprob(4)=mat2cell(tx_storm,1,5);
 batchparms_full=[sum(cat(1,stormprob{1})) sum(cat(1,stormprob{2})) ...
     sum(cat(1,stormprob{3})) sum(cat(1,stormprob{4}))];
 batchparms_unq=unique(batchparms_full);
-branges=[40000:16000:184000 200001];
-% baseruns=511:540;
+branges=[40000:16000:184000 200001];    % income distribution bins
 
-% matguide=batchparms_full;
-% for ii=1:EXPTRUNS
-% matguide(batchparms_full(:,1)==batchparms_unq(ii,1),1)=ii;
-% matguide(batchparms_full(:,2)==batchparms_unq(ii,2),2)=ii;
-% end
-
+%%% Adjust this %% 
+% navigate to results file storage
 cd X:\model_results\CHALMS_alt_storm_climate
 fnames=dir;
 fnamescell=struct2cell(fnames);
-h=strncmp('storm_clim',fnamescell(1,:),10);
+% (2) change the prefix of the results file names
+h=strncmp('storm_altclim',fnamescell(1,:),10);
 hind=find(h==1);
+% add precalculated distance matrix
 cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\data_files
 load DIST2CBD_east
 cd X:\model_results\CHALMS_alt_storm_climate
 distpt=ceil(min(min(dist2cbd)):max(max(dist2cbd)));
 density=zeros(NLENGTH*NWIDTH,length(hind));
 
-% buildprob=zeros(NLENGTH,NWIDTH);
 pctdev=zeros(length(hind),TMAX);
 htprob=cell(TMAX,length(hind));
 htentropy=zeros(length(hind),TMAX);
@@ -69,6 +75,8 @@ htentropy_cross=zeros(length(hind),TMAX);
 
 LTmap=cell(TMAX,length(hind));
 avgrentstats=cell(1,length(hind));
+avgreturnstats=cell(1,length(hind));
+avgexptreturnstats=cell(1,length(hind));
 numltrlts=cell(TMAX,length(hind));
 incomes=cell(1,length(hind));
 
@@ -88,23 +96,21 @@ avgvac=zeros(ERUNS,length(TSTART:TMAX));
 vacrlts=zeros(length(hind),length(TSTART:TMAX));
 testpctdev=zeros(ERUNS,TMAX);
 VARLAYER=zeros(80*80,ERUNS);
-for mr=1:length(hind)
-    h=strcmp(sprintf('storm_clim%d_%d.mat',batchind(mr,1),...
+for mr=1:length(hind)   % MRUNS*EXPTRUNS
+    h=strcmp(sprintf('storm_altclim%d_%d.mat',batchind(mr,1),...
         batchind(mr,2)),fnamescell(1,:));
     filename=fnamescell{1,h};
     load(filename)
     
+    % lot type map over time
     LTmap(:,mr)=mat2cell(LOTTYPE,NLENGTH*NWIDTH,ones(1,TMAX));
     devarea=(cat(2,LTmap{:,mr})~=0);
     pctdev(mr,:)=sum(devarea,1)/(NLENGTH*NWIDTH);
     
-    % probability of housing type in within a single run
+    % probability of housing type being built in a single run
     numltrlts(:,mr)=mat2cell(numlt,HT,ones(1,TMAX));
     htprob(:,mr)=mat2cell((numlt.*repmat(z(:,1),1,TMAX))./...
         repmat(sum(numlt.*repmat(z(:,1),1,TMAX),1),HT,1),HT,ones(1,TMAX));
-%     fullset=[1-pctdev(mr,:); repmat(pctdev(mr,:),HT,1).*cat(2,htprob{:,mr})];
-%     entropy(:,mr)=-sum(fullset.*log(fullset),1)./...
-%         log(HT+1);
     htentropy(mr,:)=-sum(cat(2,htprob{:,mr}).*log(cat(2,htprob{:,mr})),1)./log(HT);
     
     % find density gradient
@@ -122,9 +128,13 @@ for mr=1:length(hind)
     end
 
     % time series data
-    vacrlts(mr,:)=vacrate(TSTART:TMAX);
-    avgrentstats(mr)=mat2cell(avgrent,HT,TMAX);
-    
+    vacrlts(mr,:)=vacrate(TSTART:TMAX); % vacancy rate
+    avgrentstats(mr)=mat2cell(avgrent,HT,TMAX); % average rents
+    Realavgret(isnan(Realavgret))=0;   % average return per housetype based on sale price
+    avgreturnstats(mr)=mat2cell(Realavgret,HT,TMAX);
+    Realavgexptret(isnan(Realavgexptret))=0;    % average expected return based on asking price
+    avgexptreturnstats(mr)=mat2cell(Realavgexptret,HT,TMAX);
+    % consumer incomes at TMAX
     incomes(mr)=mat2cell(cat(1,CONINFO{:,1}),length(CONINFO),1);
     
     % mapped variables
@@ -132,24 +142,23 @@ for mr=1:length(hind)
     inotvac=find(cat(1,lotchoice{:,4})==1);
     for i=1:length(cat(1,Lottype{inotvac,1}))
         incomemap(Lottype{inotvac(i),2},mr)=CONINFO{lotchoice{inotvac(i),5},1}*...
-            ones(length(Lottype{inotvac(i),2}),1);
+            ones(length(Lottype{inotvac(i),2}),1);  % incomes
         amprefmap(Lottype{inotvac(i),2},mr)=CONINFO{lotchoice{inotvac(i),5},6}*...
-            ones(length(Lottype{inotvac(i),2}),1);
-        housepricemap(Lottype{inotvac(i),2},mr)=lotchoice{inotvac(i),7};
+            ones(length(Lottype{inotvac(i),2}),1);  % consumer preference for amenity
+        housepricemap(Lottype{inotvac(i),2},mr)=lotchoice{inotvac(i),7};    %house asking/sale prices
     end
     
-    
+    % land sales
     for nf=1:length(farmsoldinfo(:,1))
         ifarm=find(cat(1,LANDINFO{1,10})==farmsoldinfo(nf,1));
         landsales(ifarm,mr)=farmsoldinfo(nf,4);
         landsaletime(ifarm,mr)=farmsoldinfo(nf,2);
     end
     
-%     if strcmp(sprintf('results_CHALMS_Coast_batch_%d_30',batchind(mr,1)),fnamescell(1,hind(mr)))==1
-%         buildprob=reshape(VARLAYER,NLENGTH,NWIDTH)/length(hind);
-%     end
+    % build development proability map
     VARLAYER(:,batchind(mr,1))=VARLAYER(:,batchind(mr,1))+BASELAYER;    %record frequency of development per cell across model runs
-    
+
+    % clear single model run results
     clear('consumerstats','vacstats','BUILDTIME','VACLAND','RENT','RETURN',...
         'LOTTYPE','BASELAYER','Rpop','Rvacrate','Rvaclots',...
         'numlt','Rleftoverpop','avgrentdynms','rentdynstats',...
@@ -168,12 +177,7 @@ for mr=1:length(hind)
         'TSI','IMPACT','DAMAGE','LANDINFO','lotlocate')
 end
 
-% Rationale for using Shannon Index to quantify uncertainty in predicting
-% housing types for any given location: a given cell could be occupied by 1
-% of 8 housing types as well as remain undeveloped. The Shannon index
-% describes how rare something is relative to the popularity - should be
-% used in combination with a statistic that decribes how consistently a
-% cell was occupied in a particualr state.
+% Calculate housing stock evenness and build average development map
 for ie=1:ERUNS
     ierun=find(batchind(:,1)==ie);
     avgpctdev(ie,:)=mean(pctdev(ierun,:),1);
@@ -189,8 +193,7 @@ for ie=1:ERUNS
         ltprob=histc(devreal,1:HT,2)./length(ierun);
         [maxltprob,imaxtype]=max(ltprob,[],2);
         imaxtype(maxltprob==0)=0;
-        
-        %%% Fix this to work with LTmap
+       
         devprob=sum((cat(2,LTmap{tt,ierun})~=0),2)./length(ierun);
         
         %%%%% Test representativeness of varmap
@@ -209,13 +212,9 @@ for ie=1:ERUNS
             else
                 subavgthresh(iter)=avgthresh(ie,tt)+subpctdevdiff(iter);
             end
-            %         avgthresh(tt)=avgthresh(tt)+pctdevdiff;
-            
-            %         ivarthresh=(devprob >= avgthresh(tt));
             ivarthresh=(devprob >= subavgthresh(iter));
             locmat=find(ivarthresh==1);
             testpctdev(ie,tt)=length(find(ivarthresh==1))/(NLENGTH*NWIDTH);
-            %         pctdevdiff=testpctdev(tt)-avgpctdev(tt);
             pctdevdiff=testpctdev(ie,tt)-avgpctdev(ie,tt);
             subpctdevdiff(iter+1)=pctdevdiff;
             if abs(subpctdevdiff(iter))-abs(subpctdevdiff(iter+1)) < 0
@@ -228,11 +227,6 @@ for ie=1:ERUNS
                 testpctdev(ie,tt)=length(find(ivarthresh==1))/(NLENGTH*NWIDTH);
                 break
             end
-            iter=iter+1;
-            %%% Need to include a kill switch if abs(pctdevdiff) is not getting
-            %%% smaller - need temporal tracking of pctdevdiff with (iter)
-            %%% Need to track avgthresh so that previous state can be restored
-            %%% if performance does not improve
         end
         
         imapcover=find(ivarthresh==1);
@@ -262,134 +256,167 @@ for ie=1:ERUNS
             AVGMAP(:,:,tt,ie)=subAVGMAP;
         end
         testmeandisp=sum(altprop)/length(imapcover);
-        %     subCONFMAP=zeros(NLENGTH,NWIDTH);
-        %     subCONFMAP(ivarthresh)=confprob(ivarthresh);
-        %     CONFMAP(:,:,tt)=subCONFMAP;
     end
 end
+%% Create struct files of saved results
+% spatial data at t=TMAX, size=[NLENGTH*NWIDTH,MRUNS*EXPTRUNS]
+mapdata_store=struct('lot_types',{LTmap},'income_map',{incomemap},...
+    'amenity_prefs',{amprefmap},'house_prices',{houseprefmap},...
+    'build_time',{btmap},'land_sales_price',{landsales},'land_sales_time',...
+    {landsalestime});
 
-%% Single run comparisons
-irun1=(batchind(:,2)==1);
-ls1=landsales(:,batchind(:,2)==1);
-bt1=btmap(:,batchind(:,2)==1);
-inc1=incomemap(:,batchind(:,2)==1);
+% results by housing type over time, size=[HT,TMAX,MRUNS*EXPTRUNS]
+numlts_store=cell(1,MRUNS*EXPTRUNS);
+for ir=1:MRUNS*EXPTRUNS
+    numlts_store(ir)=mat2cell(cat(2,numltrlts{:,ir}),HT,TMAX);
+end
+htdata_store=struct('num_lots',{numlts_store},'avg_rents',{avgrentstats},...
+    'avg_return',{avgreturnstats},'avg_expt_ret',{avgexptreturnstats},...
+    'house_stock_evenness',{htentropy});
 
-inc_t=zeros(10,TMAX,4);
-avgrent_t=zeros(HT,TMAX,4);
-vacrates=zeros(4,21);
-landprice=zeros(NCELLS,4);
-landtime=zeros(NCELLS,4);
-landsale_run=cell(1,4);
-saletime=cell(1,4);
-branges=[40000:16000:184000 200001];
-htype_run=zeros(HT,TMAX,4);
-rentmat=zeros(4,TMAX,HT);
-inc_wghavg=zeros(TMAX,4);
-for i=1:4
+% aggregate data across housing types
+% build consumer income distribution
+incdist_cell=cell(1,length(hind));
+for j=1:length(hind)
+    inc1=incomemap(:,j);
+    bt1=btmap(:,j);
+    inc_t=zeros(length(branges),TMAX);
     for it=TSTART:TMAX
         ibt=(bt1(:,i)==it);
         occinc=unique(inc1(ibt,i));
         occinc=occinc(occinc~=0);
         h=histc(occinc,branges);
-        inc_t(:,it,i)=h(1:10);
-        %         histc(occinc,56000:16000:200000)
-        
-        avgrent_t(:,:,i)=avgrentstats{batchind(:,1)==i & batchind(:,2)==1};
-        inc_wghavg(it,:)=sum(reshape(inc_t(:,it,:),10,4).*...
-            repmat(branges(1:10)',1,4),1)./sum(reshape(inc_t(:,it,:),10,4),1);
-
+        inc_t(:,it)=h(1:length(branges));
     end
-    ltmap=cat(2,LTmap{:,batchind(:,1)==i & batchind(:,2)==1});
-    htype_run(:,:,i)=histc(ltmap,1:HT);
-    vacrates(i,:)=vacrlts(batchind(:,1)==i & batchind(:,2)==1,:);
-    
-    % land sale price, location, and time
-    landprice(:,i)=landsales(:,batchind(:,1)==i & batchind(:,2)==1);
-    landtime(:,i)=landsaletime(:,batchind(:,1)==i & batchind(:,2)==1);
-    [farmsale,ia,ic]=unique(landprice(:,i),'stable');
-    farmsale=farmsale(farmsale~=0);
-    saletime=landtime(ia,i);
-    saletime=saletime(saletime~=0);
-    [row,coastd]=ind2sub([NLENGTH NWIDTH],ia);
-    landsale_run(i)=mat2cell([farmsale saletime (NWIDTH-coastd(2:length(coastd)))...
-        dist2cbd(ia(2:length(ia)))],length(farmsale),4);
-    
-    % Rent sort
-    for ht=1:HT
-        rentmat(i,:,ht)=avgrent_t(ht,:,i);
-    end
+    incdist_cell(j)=mat2cell(inc_t,length(branges),length(TSTART:TMAX));
 end
+aggdata_store=struct('vacany_rates',{vacrlts},'income_distribution',{incdist_cell});
+
+save results_altclim_batch_struct mapdata_store htdata_store aggdata_store
 
 
-cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\figs\alt_stormclim
-brlabel={'$40-$56','$56-$72','$72-$88','$88-$104','$104-$120','$120-$136',...
-    '$13-$152','$152-$168','$168-$184','$184-$200'};
-strmclim{1}='MidAt';
-strmclim{2}='NC';
-strmclim{3}='FL';
-strmclim{4}='TX';
-htlabel={'1','2','3','4','5','6','7','8'};
-
-% hh3=figure;
-% set(hh3,'color','white')
-
-for i=1:4
-    % income distribution
-    hh1=figure;
-    set(hh1,'color','white','Visible','off')
-    set(hh1,'colormap',jet(10))
-    area(TSTART+1:TMAX,(inc_t(:,TSTART+1:TMAX,i)./...
-        repmat(max(sum(inc_t(:,TSTART+1:TMAX,i),1),1),10,1))')
-    lcolorbar(brlabel,'TitleString','Income($ 10^3)');
-    axis([TSTART+1 TMAX 0 1])
-    title(strmclim(i))
-    ylabel('Proportion Income Class')
-    xlabel('Time Step')
-    saveas(hh1,sprintf('Income_class_run1_%s',strmclim{i}),'jpg')
-
-    % housing type
-    hh4=figure;
-    set(hh4,'color','white','Visible','off')
-    set(hh4,'colormap',jet(8))
-    area(TSTART+1:TMAX,(htype_run(:,TSTART+1:TMAX,i))')
-%     area(TSTART+1:TMAX,(htype_run(:,TSTART+1:TMAX,i)./...
-%         repmat(sum(htype_run(:,TSTART+1:TMAX,i),1),HT,1))')
-    lcolorbar(htlabel,'ColorAlignment','center','TitleString','Housing Types')
-    title(strmclim(i))
-    ylabel('Housing Stock by Type')
-    xlabel('Time Step')
-    saveas(hh4,sprintf('Housing_Types_run1_%s',strmclim{i}),'jpg')
-    
-    % land sales space-time plot
-    hh3=figure;
-    set(hh3,'color','white','Visible','off')
-    ls_data=landsale_run{i};
-%     plot(ls_data(:,2)-TSTART,ls_data(:,3),'Marker','.','Color',reshape(rgb,length(rgb),3))
-    ls_surf=zeros(length(TSTART+1:TMAX),NWIDTH);
-    ls_surf(sub2ind(size(ls_surf),ls_data(:,2)-TSTART,ls_data(:,3)))=ls_data(:,1);
-    imagesc(ls_surf)
-    cmap=get(gcf,'colormap');
-    cmap(1,:)=[1,1,1];
-    set(hh3,'colormap',cmap)
-    axis xy
-%     set(gca,'XDir','reverse')
-    title(sprintf('Land Sales Space-Time Plot, %s',strmclim{i}))
-    xlabel('Distance from Coast')
-    ylabel('Time of Land Sale')
-    set(gca,'clim',[0 13000])
-    colorbar
-    saveas(hh3,sprintf('Land_Sales_run1_%s',strmclim{i}),'jpg')
-end
-% median rents
-    hh2=figure;
-    set(hh2,'color','white','Visible','off')
-    plot(10:30,reshape(median(avgrent_t(:,10:30,:),1),21,4),'-')
-    legend('Mid-Atl.','NC','FL','TX')
-    ylabel('Median Housing Rent')
-    xlabel('Time Step')
-    saveas(hh2,sprintf('Median_rents_run1_%s',strmclim{i}),'jpg')
-
-
+%% Single run comparisons
+% irun1=(batchind(:,2)==1);
+% ls1=landsales(:,batchind(:,2)==1);
+% bt1=btmap(:,batchind(:,2)==1);
+% inc1=incomemap(:,batchind(:,2)==1);
+% 
+% inc_t=zeros(10,TMAX,4);
+% avgrent_t=zeros(HT,TMAX,4);
+% vacrates=zeros(4,21);
+% landprice=zeros(NCELLS,4);
+% landtime=zeros(NCELLS,4);
+% landsale_run=cell(1,4);
+% saletime=cell(1,4);
+% branges=[40000:16000:184000 200001];
+% htype_run=zeros(HT,TMAX,4);
+% rentmat=zeros(4,TMAX,HT);
+% inc_wghavg=zeros(TMAX,4);
+% for i=1:4
+%     for it=TSTART:TMAX
+%         ibt=(bt1(:,i)==it);
+%         occinc=unique(inc1(ibt,i));
+%         occinc=occinc(occinc~=0);
+%         h=histc(occinc,branges);
+%         inc_t(:,it,i)=h(1:10);
+%         %         histc(occinc,56000:16000:200000)
+%         
+%         avgrent_t(:,:,i)=avgrentstats{batchind(:,1)==i & batchind(:,2)==1};
+%         inc_wghavg(it,:)=sum(reshape(inc_t(:,it,:),10,4).*...
+%             repmat(branges(1:10)',1,4),1)./sum(reshape(inc_t(:,it,:),10,4),1);
+% 
+%     end
+%     ltmap=cat(2,LTmap{:,batchind(:,1)==i & batchind(:,2)==1});
+%     htype_run(:,:,i)=histc(ltmap,1:HT);
+%     vacrates(i,:)=vacrlts(batchind(:,1)==i & batchind(:,2)==1,:);
+%     
+%     % land sale price, location, and time
+%     landprice(:,i)=landsales(:,batchind(:,1)==i & batchind(:,2)==1);
+%     landtime(:,i)=landsaletime(:,batchind(:,1)==i & batchind(:,2)==1);
+%     [farmsale,ia,ic]=unique(landprice(:,i),'stable');
+%     farmsale=farmsale(farmsale~=0);
+%     saletime=landtime(ia,i);
+%     saletime=saletime(saletime~=0);
+%     [row,coastd]=ind2sub([NLENGTH NWIDTH],ia);
+%     landsale_run(i)=mat2cell([farmsale saletime (NWIDTH-coastd(2:length(coastd)))...
+%         dist2cbd(ia(2:length(ia)))],length(farmsale),4);
+%     
+%     % Rent sort
+%     for ht=1:HT
+%         rentmat(i,:,ht)=avgrent_t(ht,:,i);
+%     end
+% end
+% 
+% 
+% cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\figs\alt_stormclim
+% brlabel={'$40-$56','$56-$72','$72-$88','$88-$104','$104-$120','$120-$136',...
+%     '$13-$152','$152-$168','$168-$184','$184-$200'};
+% strmclim{1}='MidAt';
+% strmclim{2}='NC';
+% strmclim{3}='FL';
+% strmclim{4}='TX';
+% htlabel={'1','2','3','4','5','6','7','8'};
+% 
+% % hh3=figure;
+% % set(hh3,'color','white')
+% 
+% for i=1:4
+%     % income distribution
+%     hh1=figure;
+%     set(hh1,'color','white','Visible','off')
+%     set(hh1,'colormap',jet(10))
+%     area(TSTART+1:TMAX,(inc_t(:,TSTART+1:TMAX,i)./...
+%         repmat(max(sum(inc_t(:,TSTART+1:TMAX,i),1),1),10,1))')
+%     lcolorbar(brlabel,'TitleString','Income($ 10^3)');
+%     axis([TSTART+1 TMAX 0 1])
+%     title(strmclim(i))
+%     ylabel('Proportion Income Class')
+%     xlabel('Time Step')
+%     saveas(hh1,sprintf('Income_class_run1_%s',strmclim{i}),'jpg')
+% 
+%     % housing type
+%     hh4=figure;
+%     set(hh4,'color','white','Visible','off')
+%     set(hh4,'colormap',jet(8))
+%     area(TSTART+1:TMAX,(htype_run(:,TSTART+1:TMAX,i))')
+% %     area(TSTART+1:TMAX,(htype_run(:,TSTART+1:TMAX,i)./...
+% %         repmat(sum(htype_run(:,TSTART+1:TMAX,i),1),HT,1))')
+%     lcolorbar(htlabel,'ColorAlignment','center','TitleString','Housing Types')
+%     title(strmclim(i))
+%     ylabel('Housing Stock by Type')
+%     xlabel('Time Step')
+%     saveas(hh4,sprintf('Housing_Types_run1_%s',strmclim{i}),'jpg')
+%     
+%     % land sales space-time plot
+%     hh3=figure;
+%     set(hh3,'color','white','Visible','off')
+%     ls_data=landsale_run{i};
+% %     plot(ls_data(:,2)-TSTART,ls_data(:,3),'Marker','.','Color',reshape(rgb,length(rgb),3))
+%     ls_surf=zeros(length(TSTART+1:TMAX),NWIDTH);
+%     ls_surf(sub2ind(size(ls_surf),ls_data(:,2)-TSTART,ls_data(:,3)))=ls_data(:,1);
+%     imagesc(ls_surf)
+%     cmap=get(gcf,'colormap');
+%     cmap(1,:)=[1,1,1];
+%     set(hh3,'colormap',cmap)
+%     axis xy
+% %     set(gca,'XDir','reverse')
+%     title(sprintf('Land Sales Space-Time Plot, %s',strmclim{i}))
+%     xlabel('Distance from Coast')
+%     ylabel('Time of Land Sale')
+%     set(gca,'clim',[0 13000])
+%     colorbar
+%     saveas(hh3,sprintf('Land_Sales_run1_%s',strmclim{i}),'jpg')
+% end
+% % median rents
+%     hh2=figure;
+%     set(hh2,'color','white','Visible','off')
+%     plot(10:30,reshape(median(avgrent_t(:,10:30,:),1),21,4),'-')
+%     legend('Mid-Atl.','NC','FL','TX')
+%     ylabel('Median Housing Rent')
+%     xlabel('Time Step')
+%     saveas(hh2,sprintf('Median_rents_run1_%s',strmclim{i}),'jpg')
+% 
+% 
 %% Create figures and results
 
 cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\figs\alt_stormclim
@@ -629,7 +656,7 @@ for q=1:ERUNS
 end
 
 
-%%
+%% Plots for multiple experimental parameters
 
 %%%% Summary plots
 % Build Time
