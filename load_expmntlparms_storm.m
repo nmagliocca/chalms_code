@@ -29,14 +29,14 @@ miteff=1*ones(1,EXPTRUNS);          %baseline
 % Initial land value
 AVGFARMRETURN=2486.3*ones(1,EXPTRUNS);
 STDFARMRETURN=0.10*AVGFARMRETURN.*ones(1,EXPTRUNS);
-lvset=mat2cell([3; 2; 1]*linspace(0.5,1.5,EXPTRUNS),ones(3,1),EXPTRUNS);    %baseline
-% lvset=[3; 2; 1]*ones(1,EXPTRUNS);
-% coastvalue=3*ones(1,EXPTRUNS);
-% midvalue=2*ones(1,EXPTRUNS);
-% inlandvalue=1*ones(1,EXPTRUNS);
-coastvalue=lvset{1};
-midvalue=lvset{2};
-inlandvalue=ones(1,EXPTRUNS);
+% lvset=mat2cell([3; 2; 1]*linspace(0.5,1.5,EXPTRUNS),ones(3,1),EXPTRUNS);    
+% coastvalue=lvset{1};
+% midvalue=lvset{2};
+% inlandvalue=ones(1,EXPTRUNS);
+coastvalue=3*ones(1,EXPTRUNS);
+midvalue=2*ones(1,EXPTRUNS);
+inlandvalue=1*ones(1,EXPTRUNS);
+
 
 % Travel costs
 milecost=1.30*ones(1,EXPTRUNS);     %baseline

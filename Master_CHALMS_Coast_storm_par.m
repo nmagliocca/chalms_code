@@ -1082,7 +1082,9 @@ for erun=1:EXPTRUNS
         FARMPROJ=zeros(Nfarmers,1);
         for rf=1:length(iNfarmers)
             ifarmcalc=find(farmerid == iNfarmers(rf));
-            FARMPROJ(iNfarmers(rf))=mean(meanPLAND(1)-subtc(ifarmcalc));
+%             FARMPROJ(iNfarmers(rf))=mean(meanPLAND(1)-subtc(ifarmcalc));
+%             wtpland(iNfarmers(rf),1)=FARMPROJ(iNfarmers(rf));
+            FARMPROJ(iNfarmers(rf))=mean(PLAND(ifarmcalc));
             wtpland(iNfarmers(rf),1)=FARMPROJ(iNfarmers(rf));
         end
         learnwtaland(iNfarmers,1)=wtaland(iNfarmers,1);
@@ -1104,8 +1106,12 @@ for erun=1:EXPTRUNS
             meanPLAND(tlearn)=mean(PLAND(iurblist));
             for rf=1:length(iNfarmers)
                 ifarmcalc=find(farmerid == iNfarmers(rf));
-                FARMPROJ(iNfarmers(rf))=mean(meanPLAND(tlearn)-subtc(ifarmcalc));
-                wtpland(iNfarmers(rf),tlearn)=FARMPROJ(iNfarmers(rf));
+%                 [nfrow,nfcol]=ind2sub([NLENGTH NWIDTH],[Farminfo{iNfarmers(rf),1} median(iurblist)]);
+%                 nfdist=sqrt((nfrow(1)-nfrow(2))^2+(nfcol(1)-nfcol(2))^2);
+%                 planddiff=mean(PLAND(iurblist))-mean(PLAND(ifarmcalc));
+%                 FARMPROJ(iNfarmers(rf))=mean(meanPLAND(tlearn)-planddiff);
+%                 wtpland(iNfarmers(rf),tlearn)=FARMPROJ(iNfarmers(rf));
+                wtpland(iNfarmers(rf),tlearn)=mean(PLAND(ifarmcalc));
             end
             
             %%%%% LAND MARKET %%%%%%%%
@@ -2133,15 +2139,17 @@ for erun=1:EXPTRUNS
             end
             numlt(:,t)=histc(cat(1,Lottype{:,5}),1:HT);
             
-            subplandinfo=cat(2,LANDINFO{3,t-1});
-            for in=1:length(iNfarmers)
-                ifarmland=find(LANDINFO{1,t}==nf);
-                subplandinfo(ifarmland)=LOCWGHT*wtaland(iNfarmers(in),t-1)+...
-                    REGWGHT*mean(mean(subplandinfo));
-                LANDINFO(3,t)=mat2cell(subplandinfo,NCELLS,1);
-%                 Dynplandmap(:,:,t)=reshape(cat(2,LANDINFO{3,t}),NLENGTH,NWIDTH);
-                Dynplandmap(:,t)=cat(2,LANDINFO{3,t});
-            end
+            %             subplandinfo=cat(2,LANDINFO{3,t-1});
+%             for in=1:length(iNfarmers)
+%                 ifarmland=find(LANDINFO{1,t}==nf);
+%                 subplandinfo(ifarmland)=LOCWGHT*wtaland(iNfarmers(in),t-1)+...
+%                     REGWGHT*mean(mean(subplandinfo));
+%                 LANDINFO(3,t)=mat2cell(subplandinfo,NCELLS,1);
+% %                 Dynplandmap(:,:,t)=reshape(cat(2,LANDINFO{3,t}),NLENGTH,NWIDTH);
+%                 
+%             end
+            LANDINFO(3,t)=LANDINFO(3,t-1);
+            Dynplandmap(:,t)=cat(2,LANDINFO{3,t});
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %%%%%%%%%%%%%%%%%%%%%%%%    Storm Simulator    %%%%%%%%%%%%%%%%%%%%%%%%
@@ -2507,6 +2515,7 @@ for erun=1:EXPTRUNS
             for tt=t
                 if isempty(iNfarmers)==1 || landdemand(tt) == 0
                     ifarmtrans=[];
+                    LANDINFO(3,t)=LANDINFO(3,t-1);
                     %         Plandproj(iNfarmers,tt)=mean([wtaland(iNfarmers,tt) wtpland(iNfarmers,tt)],2);
                     continue
                 else

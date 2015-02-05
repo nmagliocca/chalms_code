@@ -177,93 +177,93 @@ for mr=1:length(hind)   % MRUNS*EXPTRUNS
         'TSI','IMPACT','DAMAGE','LANDINFO','lotlocate')
 end
 
-% Calculate housing stock evenness and build average development map
-for ie=1:ERUNS
-    ierun=find(batchind(:,1)==ie);
-    avgpctdev(ie,:)=mean(pctdev(ierun,:),1);
-    avgthresh(ie,:)=avgpctdev(ie,:);
-    avgvac(ie,:)=mean(vacrlts(ierun,:),1);
-    for tt=TSTART:TMAX
-        % probability of housing type across runs, by time step
-        htprob_cross(tt,ierun)=mat2cell((cat(2,numltrlts{tt,ierun}).*repmat(z(:,1),1,length(ierun)))./...
-            repmat(sum(cat(2,numltrlts{tt,ierun}).*repmat(z(:,1),1,length(ierun)),1),HT,1),HT,ones(1,length(ierun)));
-        htentropy_cross(ierun,tt)=-sum(cat(2,htprob_cross{tt,ierun}).*log(cat(2,htprob_cross{tt,ierun})),1)./log(HT);
-        
-        devreal=cat(2,LTmap{tt,ierun});
-        ltprob=histc(devreal,1:HT,2)./length(ierun);
-        [maxltprob,imaxtype]=max(ltprob,[],2);
-        imaxtype(maxltprob==0)=0;
-       
-        devprob=sum((cat(2,LTmap{tt,ierun})~=0),2)./length(ierun);
-        
-        %%%%% Test representativeness of varmap
-        ivarthresh=(devprob >= avgthresh(ie,tt));
-        locmat=find(ivarthresh==1);
-        testpctdev(ie,tt)=length(find(ivarthresh==1))/(NLENGTH*NWIDTH);
-        pctdevdiff=testpctdev(ie,tt)-avgpctdev(ie,tt);
-        iter=1;
-        subpctdevdiff=zeros(1,[]);
-        subavgthresh=zeros(1,[]);
-        subavgthresh(iter)=avgthresh(ie,tt);
-        while abs(pctdevdiff) > 0.01
-            subpctdevdiff(iter)=pctdevdiff;
-            if iter > 1
-                subavgthresh(iter)=subavgthresh(iter-1)+subpctdevdiff(iter);
-            else
-                subavgthresh(iter)=avgthresh(ie,tt)+subpctdevdiff(iter);
-            end
-            ivarthresh=(devprob >= subavgthresh(iter));
-            locmat=find(ivarthresh==1);
-            testpctdev(ie,tt)=length(find(ivarthresh==1))/(NLENGTH*NWIDTH);
-            pctdevdiff=testpctdev(ie,tt)-avgpctdev(ie,tt);
-            subpctdevdiff(iter+1)=pctdevdiff;
-            if abs(subpctdevdiff(iter))-abs(subpctdevdiff(iter+1)) < 0
-                if iter > 1
-                    ivarthresh=(devprob >= subavgthresh(iter-1));
-                    avgthresh(ie,tt)=subavgthresh(iter-1);
-                else
-                    ivarthresh=(devprob >= avgthresh(ie,tt));
-                end
-                testpctdev(ie,tt)=length(find(ivarthresh==1))/(NLENGTH*NWIDTH);
-                break
-            end
-        end
-        
-        imapcover=find(ivarthresh==1);
-        testmap=zeros(NLENGTH,NWIDTH);
-        testmap(imapcover)=1;
-        altprop=zeros(length(find(imapcover)),1);
-        for ic=1:length(imapcover)
-            [row,col]=ind2sub([NLENGTH NWIDTH],imapcover(ic));
-            updir=max(row-2,1);
-            dndir=min(row+2,NLENGTH);
-            lfdir=max(col-2,1);
-            rtdir=min(col+2,NWIDTH);
-            altprop(ic)=length(find(testmap(updir:dndir,lfdir:rtdir)==0))/...
-                (length(updir:dndir)*length(lfdir:rtdir));
-        end
-        subAVGMAP=zeros(NLENGTH,NWIDTH);
-        if tt > TSTART
-            idevthere=(AVGMAP(:,:,tt-1,ie)~=0);
-            indthresh=find(ivarthresh==1);
-            inddev=find(idevthere==1);
-            idevadd=~ismember(indthresh,inddev);
-            subAVGMAP=AVGMAP(:,:,tt-1,ie);
-            subAVGMAP(indthresh(idevadd))=imaxtype(indthresh(idevadd));
-            AVGMAP(:,:,tt,ie)=subAVGMAP;
-        else
-            subAVGMAP(ivarthresh)=imaxtype(ivarthresh);
-            AVGMAP(:,:,tt,ie)=subAVGMAP;
-        end
-        testmeandisp=sum(altprop)/length(imapcover);
-    end
-end
+% % Calculate housing stock evenness and build average development map
+% for ie=1:ERUNS
+%     ierun=find(batchind(:,1)==ie);
+%     avgpctdev(ie,:)=mean(pctdev(ierun,:),1);
+%     avgthresh(ie,:)=avgpctdev(ie,:);
+%     avgvac(ie,:)=mean(vacrlts(ierun,:),1);
+%     for tt=TSTART:TMAX
+%         % probability of housing type across runs, by time step
+%         htprob_cross(tt,ierun)=mat2cell((cat(2,numltrlts{tt,ierun}).*repmat(z(:,1),1,length(ierun)))./...
+%             repmat(sum(cat(2,numltrlts{tt,ierun}).*repmat(z(:,1),1,length(ierun)),1),HT,1),HT,ones(1,length(ierun)));
+%         htentropy_cross(ierun,tt)=-sum(cat(2,htprob_cross{tt,ierun}).*log(cat(2,htprob_cross{tt,ierun})),1)./log(HT);
+%         
+%         devreal=cat(2,LTmap{tt,ierun});
+%         ltprob=histc(devreal,1:HT,2)./length(ierun);
+%         [maxltprob,imaxtype]=max(ltprob,[],2);
+%         imaxtype(maxltprob==0)=0;
+%        
+%         devprob=sum((cat(2,LTmap{tt,ierun})~=0),2)./length(ierun);
+%         
+%         %%%%% Test representativeness of varmap
+%         ivarthresh=(devprob >= avgthresh(ie,tt));
+%         locmat=find(ivarthresh==1);
+%         testpctdev(ie,tt)=length(find(ivarthresh==1))/(NLENGTH*NWIDTH);
+%         pctdevdiff=testpctdev(ie,tt)-avgpctdev(ie,tt);
+%         iter=1;
+%         subpctdevdiff=zeros(1,[]);
+%         subavgthresh=zeros(1,[]);
+%         subavgthresh(iter)=avgthresh(ie,tt);
+%         while abs(pctdevdiff) > 0.05
+%             subpctdevdiff(iter)=pctdevdiff;
+%             if iter > 1
+%                 subavgthresh(iter)=subavgthresh(iter-1)+subpctdevdiff(iter);
+%             else
+%                 subavgthresh(iter)=avgthresh(ie,tt)+subpctdevdiff(iter);
+%             end
+%             ivarthresh=(devprob >= subavgthresh(iter));
+%             locmat=find(ivarthresh==1);
+%             testpctdev(ie,tt)=length(find(ivarthresh==1))/(NLENGTH*NWIDTH);
+%             pctdevdiff=testpctdev(ie,tt)-avgpctdev(ie,tt);
+%             subpctdevdiff(iter+1)=pctdevdiff;
+%             if abs(subpctdevdiff(iter))-abs(subpctdevdiff(iter+1)) < 0
+%                 if iter > 1
+%                     ivarthresh=(devprob >= subavgthresh(iter-1));
+%                     avgthresh(ie,tt)=subavgthresh(iter-1);
+%                 else
+%                     ivarthresh=(devprob >= avgthresh(ie,tt));
+%                 end
+%                 testpctdev(ie,tt)=length(find(ivarthresh==1))/(NLENGTH*NWIDTH);
+%                 break
+%             end
+%         end
+%         
+%         imapcover=find(ivarthresh==1);
+%         testmap=zeros(NLENGTH,NWIDTH);
+%         testmap(imapcover)=1;
+%         altprop=zeros(length(find(imapcover)),1);
+%         for ic=1:length(imapcover)
+%             [row,col]=ind2sub([NLENGTH NWIDTH],imapcover(ic));
+%             updir=max(row-2,1);
+%             dndir=min(row+2,NLENGTH);
+%             lfdir=max(col-2,1);
+%             rtdir=min(col+2,NWIDTH);
+%             altprop(ic)=length(find(testmap(updir:dndir,lfdir:rtdir)==0))/...
+%                 (length(updir:dndir)*length(lfdir:rtdir));
+%         end
+%         subAVGMAP=zeros(NLENGTH,NWIDTH);
+%         if tt > TSTART
+%             idevthere=(AVGMAP(:,:,tt-1,ie)~=0);
+%             indthresh=find(ivarthresh==1);
+%             inddev=find(idevthere==1);
+%             idevadd=~ismember(indthresh,inddev);
+%             subAVGMAP=AVGMAP(:,:,tt-1,ie);
+%             subAVGMAP(indthresh(idevadd))=imaxtype(indthresh(idevadd));
+%             AVGMAP(:,:,tt,ie)=subAVGMAP;
+%         else
+%             subAVGMAP(ivarthresh)=imaxtype(ivarthresh);
+%             AVGMAP(:,:,tt,ie)=subAVGMAP;
+%         end
+%         testmeandisp=sum(altprop)/length(imapcover);
+%     end
+% end
 %% Create struct files of saved results
 % spatial data at t=TMAX, size=[NLENGTH*NWIDTH,MRUNS*EXPTRUNS]
 mapdata_store=struct('lot_types',{LTmap},'income_map',{incomemap},...
-    'amenity_prefs',{amprefmap},'house_prices',{houseprefmap},...
+    'amenity_prefs',{amprefmap},'house_prices',{housepricemap},...
     'build_time',{btmap},'land_sales_price',{landsales},'land_sales_time',...
-    {landsalestime});
+    {landsaletime});
 
 % results by housing type over time, size=[HT,TMAX,MRUNS*EXPTRUNS]
 numlts_store=cell(1,MRUNS*EXPTRUNS);
@@ -280,15 +280,15 @@ incdist_cell=cell(1,length(hind));
 for j=1:length(hind)
     inc1=incomemap(:,j);
     bt1=btmap(:,j);
-    inc_t=zeros(length(branges),TMAX);
+    inc_t=zeros(length(branges)-1,length(TSTART:TMAX));
     for it=TSTART:TMAX
-        ibt=(bt1(:,i)==it);
-        occinc=unique(inc1(ibt,i));
+        ibt=(bt1==it);
+        occinc=unique(inc1(ibt));
         occinc=occinc(occinc~=0);
         h=histc(occinc,branges);
-        inc_t(:,it)=h(1:length(branges));
+        inc_t(:,it)=h(1:length(branges)-1);
     end
-    incdist_cell(j)=mat2cell(inc_t,length(branges),length(TSTART:TMAX));
+    incdist_cell(j)=mat2cell(inc_t(:,TSTART:TMAX),length(branges)-1,length(TSTART:TMAX));
 end
 aggdata_store=struct('vacany_rates',{vacrlts},'income_distribution',{incdist_cell});
 
