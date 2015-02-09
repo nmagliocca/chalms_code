@@ -13,6 +13,7 @@ NCELLS=NLENGTH*NWIDTH;
 TSTART=10;
 TMAX=30;
 HT=8;
+cell2mile=0.0395;
 z = 1000*[0.00025    1.5000
     0.00025    2.5000
     0.0005    1.5000
@@ -176,88 +177,89 @@ for mr=1:length(hind)   % MRUNS*EXPTRUNS
         'profset','avgbrokervar','carrycost','Lottype','CONINFO','PREFMAP',...
         'TSI','IMPACT','DAMAGE','LANDINFO','lotlocate')
 end
-
+%%
 % % Calculate housing stock evenness and build average development map
-% for ie=1:ERUNS
-%     ierun=find(batchind(:,1)==ie);
-%     avgpctdev(ie,:)=mean(pctdev(ierun,:),1);
-%     avgthresh(ie,:)=avgpctdev(ie,:);
-%     avgvac(ie,:)=mean(vacrlts(ierun,:),1);
-%     for tt=TSTART:TMAX
-%         % probability of housing type across runs, by time step
-%         htprob_cross(tt,ierun)=mat2cell((cat(2,numltrlts{tt,ierun}).*repmat(z(:,1),1,length(ierun)))./...
-%             repmat(sum(cat(2,numltrlts{tt,ierun}).*repmat(z(:,1),1,length(ierun)),1),HT,1),HT,ones(1,length(ierun)));
-%         htentropy_cross(ierun,tt)=-sum(cat(2,htprob_cross{tt,ierun}).*log(cat(2,htprob_cross{tt,ierun})),1)./log(HT);
-%         
-%         devreal=cat(2,LTmap{tt,ierun});
-%         ltprob=histc(devreal,1:HT,2)./length(ierun);
-%         [maxltprob,imaxtype]=max(ltprob,[],2);
-%         imaxtype(maxltprob==0)=0;
-%        
-%         devprob=sum((cat(2,LTmap{tt,ierun})~=0),2)./length(ierun);
-%         
-%         %%%%% Test representativeness of varmap
-%         ivarthresh=(devprob >= avgthresh(ie,tt));
-%         locmat=find(ivarthresh==1);
-%         testpctdev(ie,tt)=length(find(ivarthresh==1))/(NLENGTH*NWIDTH);
-%         pctdevdiff=testpctdev(ie,tt)-avgpctdev(ie,tt);
-%         iter=1;
-%         subpctdevdiff=zeros(1,[]);
-%         subavgthresh=zeros(1,[]);
-%         subavgthresh(iter)=avgthresh(ie,tt);
-%         while abs(pctdevdiff) > 0.05
-%             subpctdevdiff(iter)=pctdevdiff;
-%             if iter > 1
-%                 subavgthresh(iter)=subavgthresh(iter-1)+subpctdevdiff(iter);
-%             else
-%                 subavgthresh(iter)=avgthresh(ie,tt)+subpctdevdiff(iter);
-%             end
-%             ivarthresh=(devprob >= subavgthresh(iter));
-%             locmat=find(ivarthresh==1);
-%             testpctdev(ie,tt)=length(find(ivarthresh==1))/(NLENGTH*NWIDTH);
-%             pctdevdiff=testpctdev(ie,tt)-avgpctdev(ie,tt);
-%             subpctdevdiff(iter+1)=pctdevdiff;
-%             if abs(subpctdevdiff(iter))-abs(subpctdevdiff(iter+1)) < 0
-%                 if iter > 1
-%                     ivarthresh=(devprob >= subavgthresh(iter-1));
-%                     avgthresh(ie,tt)=subavgthresh(iter-1);
-%                 else
-%                     ivarthresh=(devprob >= avgthresh(ie,tt));
-%                 end
-%                 testpctdev(ie,tt)=length(find(ivarthresh==1))/(NLENGTH*NWIDTH);
-%                 break
-%             end
-%         end
-%         
-%         imapcover=find(ivarthresh==1);
-%         testmap=zeros(NLENGTH,NWIDTH);
-%         testmap(imapcover)=1;
-%         altprop=zeros(length(find(imapcover)),1);
-%         for ic=1:length(imapcover)
-%             [row,col]=ind2sub([NLENGTH NWIDTH],imapcover(ic));
-%             updir=max(row-2,1);
-%             dndir=min(row+2,NLENGTH);
-%             lfdir=max(col-2,1);
-%             rtdir=min(col+2,NWIDTH);
-%             altprop(ic)=length(find(testmap(updir:dndir,lfdir:rtdir)==0))/...
-%                 (length(updir:dndir)*length(lfdir:rtdir));
-%         end
-%         subAVGMAP=zeros(NLENGTH,NWIDTH);
-%         if tt > TSTART
-%             idevthere=(AVGMAP(:,:,tt-1,ie)~=0);
-%             indthresh=find(ivarthresh==1);
-%             inddev=find(idevthere==1);
-%             idevadd=~ismember(indthresh,inddev);
-%             subAVGMAP=AVGMAP(:,:,tt-1,ie);
-%             subAVGMAP(indthresh(idevadd))=imaxtype(indthresh(idevadd));
-%             AVGMAP(:,:,tt,ie)=subAVGMAP;
-%         else
-%             subAVGMAP(ivarthresh)=imaxtype(ivarthresh);
-%             AVGMAP(:,:,tt,ie)=subAVGMAP;
-%         end
-%         testmeandisp=sum(altprop)/length(imapcover);
-%     end
-% end
+for ie=1:EXPTRUNS
+    ierun=find(batchind(:,1)==ie);
+    avgpctdev(ie,:)=mean(pctdev(ierun,:),1);
+    avgthresh(ie,:)=avgpctdev(ie,:);
+    avgvac(ie,:)=mean(vacrlts(ierun,:),1);
+    for tt=TSTART:TMAX
+        % probability of housing type across runs, by time step
+        htprob_cross(tt,ierun)=mat2cell((cat(2,numltrlts{tt,ierun}).*repmat(z(:,1),1,length(ierun)))./...
+            repmat(sum(cat(2,numltrlts{tt,ierun}).*repmat(z(:,1),1,length(ierun)),1),HT,1),HT,ones(1,length(ierun)));
+        htentropy_cross(ierun,tt)=-sum(cat(2,htprob_cross{tt,ierun}).*log(cat(2,htprob_cross{tt,ierun})),1)./log(HT);
+        
+        devreal=cat(2,LTmap{tt,ierun});
+        ltprob=histc(devreal,1:HT,2)./length(ierun);
+        [maxltprob,imaxtype]=max(ltprob,[],2);
+        imaxtype(maxltprob==0)=0;
+       
+        devprob=sum((cat(2,LTmap{tt,ierun})~=0),2)./length(ierun);
+        
+        %%%%% Test representativeness of varmap
+        ivarthresh=(devprob >= avgthresh(ie,tt));
+        locmat=find(ivarthresh==1);
+        testpctdev(ie,tt)=length(find(ivarthresh==1))/(NLENGTH*NWIDTH);
+        pctdevdiff=testpctdev(ie,tt)-avgpctdev(ie,tt);
+        iter=1;
+        subpctdevdiff=zeros(1,[]);
+        subavgthresh=zeros(1,[]);
+        subavgthresh(iter)=avgthresh(ie,tt);
+        while abs(pctdevdiff) > 0.01
+            subpctdevdiff(iter)=pctdevdiff;
+            if iter > 1
+                subavgthresh(iter)=subavgthresh(iter-1)+subpctdevdiff(iter);
+            else
+                subavgthresh(iter)=avgthresh(ie,tt)+subpctdevdiff(iter);
+            end
+            ivarthresh=(devprob >= subavgthresh(iter));
+            locmat=find(ivarthresh==1);
+            testpctdev(ie,tt)=length(find(ivarthresh==1))/(NLENGTH*NWIDTH);
+            pctdevdiff=testpctdev(ie,tt)-avgpctdev(ie,tt);
+            subpctdevdiff(iter+1)=pctdevdiff;
+            if abs(subpctdevdiff(iter))-abs(subpctdevdiff(iter+1)) < 0
+                if iter > 1
+                    ivarthresh=(devprob >= subavgthresh(iter-1));
+                    avgthresh(ie,tt)=subavgthresh(iter-1);
+                else
+                    ivarthresh=(devprob >= avgthresh(ie,tt));
+                end
+                testpctdev(ie,tt)=length(find(ivarthresh==1))/(NLENGTH*NWIDTH);
+                break
+            end
+            iter=iter+1;
+        end
+        
+        imapcover=find(ivarthresh==1);
+        testmap=zeros(NLENGTH,NWIDTH);
+        testmap(imapcover)=1;
+        altprop=zeros(length(find(imapcover)),1);
+        for ic=1:length(imapcover)
+            [row,col]=ind2sub([NLENGTH NWIDTH],imapcover(ic));
+            updir=max(row-2,1);
+            dndir=min(row+2,NLENGTH);
+            lfdir=max(col-2,1);
+            rtdir=min(col+2,NWIDTH);
+            altprop(ic)=length(find(testmap(updir:dndir,lfdir:rtdir)==0))/...
+                (length(updir:dndir)*length(lfdir:rtdir));
+        end
+        subAVGMAP=zeros(NLENGTH,NWIDTH);
+        if tt > TSTART
+            idevthere=(AVGMAP(:,:,tt-1,ie)~=0);
+            indthresh=find(ivarthresh==1);
+            inddev=find(idevthere==1);
+            idevadd=~ismember(indthresh,inddev);
+            subAVGMAP=AVGMAP(:,:,tt-1,ie);
+            subAVGMAP(indthresh(idevadd))=imaxtype(indthresh(idevadd));
+            AVGMAP(:,:,tt,ie)=subAVGMAP;
+        else
+            subAVGMAP(ivarthresh)=imaxtype(ivarthresh);
+            AVGMAP(:,:,tt,ie)=subAVGMAP;
+        end
+        testmeandisp=sum(altprop)/length(imapcover);
+    end
+end
 %% Create struct files of saved results
 % spatial data at t=TMAX, size=[NLENGTH*NWIDTH,MRUNS*EXPTRUNS]
 mapdata_store=struct('lot_types',{LTmap},'income_map',{incomemap},...
@@ -285,15 +287,251 @@ for j=1:length(hind)
         ibt=(bt1==it);
         occinc=unique(inc1(ibt));
         occinc=occinc(occinc~=0);
+        if isempty(find(occinc,1))==1
+            inc_t(:,it-9)=zeros(length(inc_t(:,1)),1);
+            continue
+        end
         h=histc(occinc,branges);
-        inc_t(:,it)=h(1:length(branges)-1);
+        inc_t(:,it-9)=h(1:length(branges)-1);
     end
-    incdist_cell(j)=mat2cell(inc_t(:,TSTART:TMAX),length(branges)-1,length(TSTART:TMAX));
+    incdist_cell(j)=mat2cell(inc_t,length(branges)-1,length(TSTART:TMAX));
 end
 aggdata_store=struct('vacany_rates',{vacrlts},'income_distribution',{incdist_cell});
 
 save results_altclim_batch_struct mapdata_store htdata_store aggdata_store
 
+%%
+landsale_run=cell(MRUNS,EXPTRUNS);
+landsalerlts_time=zeros(TMAX,EXPTRUNS,7);
+landsalerlts_coast=zeros(8,EXPTRUNS,7);
+landsalerlts_cbd=zeros(11,EXPTRUNS,7);
+saletime=cell(1,4);
+incomedist=zeros(length(branges)-1,TMAX,EXPTRUNS);
+hdistpct=zeros(length(branges)-1,TMAX,MRUNS);
+plotpairs=cell(1,EXPTRUNS);
+for i=1:EXPTRUNS
+    iruns=batchruns{i};
+    sublandsales=landsales(:,batchruns{i});
+    sublandtime=landsaletime(:,batchruns{i});
+    subincmap=incomemap(:,iruns);
+    subbtmap=btmap(:,iruns);
+    for ii=1:MRUNS
+        for it=TSTART:TMAX
+            ibt=(subbtmap(:,ii)==it);
+            if isempty(find(ibt,1))==1
+                hdistpct(:,it,ii)=hdistpct(:,it-1,ii);
+                continue
+            end
+            hdist=histc(subincmap(ibt,ii),branges);
+            if isempty(find(hdist,1))==1
+                hdistpct(:,it,ii)=hdistpct(:,it-1,ii);
+                continue
+            end
+            hdistpct(:,it,ii)=hdist(1:length(branges)-1)./sum(hdist(1:length(branges)-1));
+        end
+
+        % land sale price, location, and time
+        [farmsale,ia,ic]=unique(sublandsales(:,ii),'stable');
+        ia=ia(farmsale~=0);
+        farmsale=farmsale(farmsale~=0);
+        saletime=sublandtime(ia,ii);
+        [row,coastd]=ind2sub([NLENGTH NWIDTH],ia);
+        landsale_run(ii,i)=mat2cell([farmsale saletime (NWIDTH-coastd)...
+            dist2cbd(ia)],length(farmsale),4);
+    end
+    incomedist(:,:,i)=mean(hdistpct,3);
+    holdpairs=cat(1,landsale_run{:,i});
+    plotpairs(i)=mat2cell(holdpairs(:,1:2),length(holdpairs),2);
+    landsale_all=cat(1,landsale_run{:,i});
+    for it=TSTART:TMAX
+        isale=(landsale_all(:,2)==it);
+        if isempty(find(isale==1,1))==1
+            continue
+        end
+        [lsmu,lssigma,lsmuci,lssigmaci]=normfit(landsale_all(isale,1));
+        lsse=lssigma/sqrt(length(landsale_all(isale,1)));
+        landsalerlts_time(it,i,1)=lsmu;
+        landsalerlts_time(it,i,2)=max(landsale_all(isale,1));
+        landsalerlts_time(it,i,3)=min(landsale_all(isale,1));
+        landsalerlts_time(it,i,4)=lssigma;
+        landsalerlts_time(it,i,5:6)=lsmuci;
+        landsalerlts_time(it,i,7)=lsse;
+    end
+    coastdistpt=unique(landsale_all(:,3));
+    for ic=1:length(coastdistpt)
+        isale=(landsale_all(:,3)==coastdistpt(ic));
+        if isempty(find(isale==1,1))==1
+            continue
+        end
+        [lsmu,lssigma,lsmuci,lssigmaci]=normfit(landsale_all(isale,1));
+        lsse=lssigma/sqrt(length(landsale_all(isale,1)));
+        landsalerlts_coast(ic,i,1)=lsmu;
+        landsalerlts_coast(ic,i,2)=max(landsale_all(isale,1));
+        landsalerlts_coast(ic,i,3)=min(landsale_all(isale,1));
+        landsalerlts_coast(ic,i,4)=lssigma;
+        landsalerlts_coast(ic,i,5:6)=lsmuci;
+        landsalerlts_coast(ic,i,7)=lsse;
+    end
+    distpts=reshape(distpt(1:110),10,11);
+    cbddist=zeros(2,11);
+    cbddist(1,:)=distpts(1,:);
+    cbddist(2,:)=distpts(10,:);
+    for id=1:length(cbddist(1,:))
+        isale=(landsale_all(:,4)>=cbddist(1,id) & landsale_all(:,4)<=cbddist(2,id));
+        if isempty(find(isale==1,1))==1
+            continue
+        end
+        [lsmu,lssigma,lsmuci,lssigmaci]=normfit(landsale_all(isale,1));
+        lsse=lssigma/sqrt(length(landsale_all(isale,1)));
+        landsalerlts_cbd(id,i,1)=lsmu;
+        landsalerlts_cbd(id,i,2)=max(landsale_all(isale,1));
+        landsalerlts_cbd(id,i,3)=min(landsale_all(isale,1));
+        landsalerlts_cbd(id,i,4)=lssigma;
+        landsalerlts_cbd(id,i,5:6)=lsmuci;
+        landsalerlts_cbd(id,i,7)=lsse;
+    end
+end
+
+
+%%
+runnamelabel={'MidAtl','NC','FL','TX'};
+tset=mat2cell(TSTART:TMAX,1,length(TSTART:TMAX));
+cdistlabel=mat2cell(((coastdistpt.*cell2mile)-coastdistpt(1)*cell2mile)',1,8);
+cbddistlabel=mat2cell(cbddist(1,:),1,11);
+rentlabel={'Avg Rents'};
+retlabel={'Avg Returns'};
+htutillabel={'Avg Utility'};
+novaclabel={'No Vacancies'};
+htincomelabel={'Income per ht'};
+bidlabel={'Share of Bids'};
+statlabel={'Low 95 CI','Up 95 CI','SE'}';
+lotlabel={'Lots Per Type'};
+lotsumlabel={'Total Lots'};
+lotsizelabel={'Avg Lot Size'};
+hpaclabel={'Houses Per Acre'};
+vaclabel={'Vacancy Rates'};
+utillabel={'Pct of Max Utility'};
+displabel={'Mean Dispersal'};
+devlabel={'Pct Developed Area'};
+biglotslabel={'Pct Development >= 1 acre'};
+zonedenlabel={'Avg. Lot Size '};
+distlabel={'Distance from CBD'};
+distlabel_c={'Distance from Coast'};
+incomelabel={'Median Income of Occupants'};
+incdistlabel={'Median Income of Occupants'};
+northincomelabel={'Mean Income of Occupants in Unzoned Region'};
+southincomelabel={'Mean Income of Occupants in Zoned Region'};
+coastincomelabel={'Mean Income of Occupants in Coastal Zone'};
+middleincomelabel={'Mean Income of Occupants in Midland Zone'};
+inlandincomelabel={'Mean Income of Occupants in Inland Zone'};
+outincomelabel={'Mean Income of Ex-occupants'};
+zonedpctdevlabel={'Pct. Dev. in Zoned Region'};
+unzonedpctdevlabel={'Pct. Dev. in Unzoned Region'};
+coastalpctdevlabel={'Pct. Dev. in Coastal Region'};
+middlepctdevlabel={'Pct. Dev. in Midland Region'};
+inlandpctdevlabel={'Pct. Dev. in Inland Region'};
+maxdistlabel={'Max Linear Distance of Development'};
+zonepricelabel={'Mean Land Price by Zoning Region'};
+coastpricelabel={'Mean Land Price by Coast/Midland/Inland Region'};
+northlabel={'North'};
+southlabel={'South'};
+coastlabel={'Coastal'};
+middlelabel={'Midland'};
+inlandlabel={'Inland'};
+% psoldlabel={'Mean Agricultural Return'};
+pfarmlabel={'Mean Agricultural Return'};
+farmsoldlabel={'Sold'};
+farmunsoldlabel={'Unsold'};
+timelabel={'Time Step'};
+lottypelabel={'Lot Type'};
+farmeridlabel={'Farmer ID'};
+selltimelabel={'Sell Time'};
+selpricelabel={'Land Price'};
+lottypeset=(1:(HT))';
+farminfolabel={'Farm Info'};
+planddistlabel={'Distance from CBD (mi) vs. Land Price ($/ac)'};
+planddistclabel={'Distance from Coast (mi) vs. Land Price ($/ac)'};
+plandtimelabel={'Time Step of Land Sale vs. Land Price ($/ac)'};
+tlabel={'Time Step'};
+dlabel={'Distance'};
+pllabel={'Land Price'};
+plandstatslabel={'Land Price Stats'};
+meanlabel={'Mean'};
+maxlabel={'Max'};
+minlabel={'Min'};
+sigmalabel={'Sigma'};
+offerlabel={'Avg House Offering'};
+ideallabel={'Utility Max House Offering'};
+proflabel={'Profit Max House Offering'};
+difflabel={'Difference'};
+dscptlabel={'Descriptive Stats'};
+carrycostlabel={'Carrying Cost'};
+
+%% Write time step file %%
+cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\results\alt_storm_climate
+resultsfile=('Results_CHALMS_alt_storm_clim.xlsx');
+for j=1:EXPTRUNS
+    xlswrite(resultsfile,timelabel,sprintf('Time Step Stats %s',runnamelabel{j}),'C1');
+    xlswrite(resultsfile,tset{:},sprintf('Time Step Stats %s',runnamelabel{j}),'C2');
+    xlswrite(resultsfile,lottypelabel,sprintf('Time Step Stats %s',runnamelabel{j}),'B2');
+    xlswrite(resultsfile,lottypeset,sprintf('Time Step Stats %s',runnamelabel{j}),'B3');
+    xlswrite(resultsfile,rentlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A3');
+    rentdump=reshape(cell2mat(avgrentstats(batchruns{j})),HT,TMAX,MRUNS);
+    xlswrite(resultsfile,mean(rentdump(:,TSTART:TMAX,:),3),sprintf('Time Step Stats %s',runnamelabel{j}),'C3');
+    
+    xlswrite(resultsfile,lotlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A12');
+    xlswrite(resultsfile,lottypeset,sprintf('Time Step Stats %s',runnamelabel{j}),'B12');
+    ltdump=reshape(cell2mat(numltrlts(:,batchruns{j})),HT,TMAX,MRUNS);
+    xlswrite(resultsfile,mean(ltdump(:,TSTART:TMAX,:),3),sprintf('Time Step Stats %s',runnamelabel{j}),'C12');
+    xlswrite(resultsfile,lotsumlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'B20');
+    xlswrite(resultsfile,sum(mean(ltdump(:,TSTART:TMAX,:),3),1),sprintf('Time Step Stats %s',runnamelabel{j}),'C20');
+    
+    xlswrite(resultsfile,dscptlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A22');
+    xlswrite(resultsfile,timelabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A23');
+    xlswrite(resultsfile,tset{:},sprintf('Time Step Stats %s',runnamelabel{j}),'B23');
+    xlswrite(resultsfile,devlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A24');
+    xlswrite(resultsfile,mean(pctdev(batchruns{j},TSTART:TMAX),1),sprintf('Time Step Stats %s',runnamelabel{j}),'B24');
+    xlswrite(resultsfile,vaclabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A25');
+    xlswrite(resultsfile,avgvac(j,:),sprintf('Time Step Stats %s',runnamelabel{j}),'B25');
+    xlswrite(resultsfile,incdistlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A27');
+    xlswrite(resultsfile,incomedist(:,TSTART:TMAX,j),sprintf('Time Step Stats %s',runnamelabel{j}),'B27');
+
+    xlswrite(resultsfile,plandstatslabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A29');
+    xlswrite(resultsfile,plandtimelabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A30');
+    xlswrite(resultsfile,tlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A31');
+    xlswrite(resultsfile,meanlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A32');
+    xlswrite(resultsfile,maxlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A33');
+    xlswrite(resultsfile,minlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A34');
+    xlswrite(resultsfile,sigmalabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A35');
+    xlswrite(resultsfile,statlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A36');
+    xlswrite(resultsfile,tset{:},sprintf('Time Step Stats %s',runnamelabel{j}),'B31');
+    xlswrite(resultsfile,reshape(landsalerlts_time(TSTART:TMAX,j,:),length(TSTART:TMAX),7)',...
+        sprintf('Time Step Stats %s',runnamelabel{j}),'B32');
+    
+    xlswrite(resultsfile,plandstatslabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A40');
+    xlswrite(resultsfile,planddistclabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A41');
+    xlswrite(resultsfile,dlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A42');
+    xlswrite(resultsfile,meanlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A43');
+    xlswrite(resultsfile,maxlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A44');
+    xlswrite(resultsfile,minlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A45');
+    xlswrite(resultsfile,sigmalabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A46');
+    xlswrite(resultsfile,statlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A47');
+    xlswrite(resultsfile,cdistlabel{:},sprintf('Time Step Stats %s',runnamelabel{j}),'B42');
+    xlswrite(resultsfile,reshape(landsalerlts_coast(:,j,:),8,7)',...
+        sprintf('Time Step Stats %s',runnamelabel{j}),'B43');
+    
+    xlswrite(resultsfile,plandstatslabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A51');
+    xlswrite(resultsfile,planddistclabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A52');
+    xlswrite(resultsfile,dlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A53');
+    xlswrite(resultsfile,meanlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A54');
+    xlswrite(resultsfile,maxlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A55');
+    xlswrite(resultsfile,minlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A56');
+    xlswrite(resultsfile,sigmalabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A57');
+    xlswrite(resultsfile,statlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A58');
+    xlswrite(resultsfile,cbddistlabel{:},sprintf('Time Step Stats %s',runnamelabel{j}),'B53');
+    xlswrite(resultsfile,reshape(landsalerlts_cbd(:,j,:),11,7)',...
+        sprintf('Time Step Stats %s',runnamelabel{j}),'B54');
+end
 
 %% Single run comparisons
 % irun1=(batchind(:,2)==1);
@@ -423,14 +661,14 @@ cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\figs\alt_stormclim
 
 % resultsfile='baseline_results_070314.txt';
 % save(resultsfile,'avgvac','avgpctdev','-ascii')
-mdninc=zeros(NLENGTH*NWIDTH,ERUNS);
-varinc=zeros(NLENGTH*NWIDTH,ERUNS);
-avgbt=zeros(NLENGTH*NWIDTH,ERUNS);
-varbt=zeros(NLENGTH*NWIDTH,ERUNS);
-avglandsale=zeros(NLENGTH*NWIDTH,ERUNS);
-varlandsale=zeros(NLENGTH*NWIDTH,ERUNS);
-avgampref=zeros(NLENGTH*NWIDTH,ERUNS);
-varampref=zeros(NLENGTH*NWIDTH,ERUNS);
+mdninc=zeros(NLENGTH*NWIDTH,EXPTRUNS);
+varinc=zeros(NLENGTH*NWIDTH,EXPTRUNS);
+avgbt=zeros(NLENGTH*NWIDTH,EXPTRUNS);
+varbt=zeros(NLENGTH*NWIDTH,EXPTRUNS);
+avglandsale=zeros(NLENGTH*NWIDTH,EXPTRUNS);
+varlandsale=zeros(NLENGTH*NWIDTH,EXPTRUNS);
+avgampref=zeros(NLENGTH*NWIDTH,EXPTRUNS);
+varampref=zeros(NLENGTH*NWIDTH,EXPTRUNS);
 strmclim{1}='MidAt';
 strmclim{2}='NC';
 strmclim{3}='FL';
@@ -439,7 +677,7 @@ h2_1=figure;
 set(h2_1, 'Color','white','OuterPosition',[1,1,400,700],'Visible','off');
 
 % plot housing types
-for j=1:ERUNS
+for j=1:EXPTRUNS
     h1=figure;
     set(h1, 'Color','white','Position',[1,1,700,700],'Visible','off');
     subplot(2,2,1);
@@ -506,16 +744,20 @@ for j=1:ERUNS
     saveas(h2,sprintf('final_consumer_income_%d',j),'jpg')
     
     figure(h2_1);
-    subplot(ERUNS,1,j);
-    hist(subincomemap(subincomemap(:,30)~=0,30),20);
-    axis([40000 200000 0 200])
-    if j < ERUNS
+    orient tall
+    set(h2_1, 'Color','white','OuterPosition',[1,1,400,700],'Visible','off');
+    subplot(EXPTRUNS,1,j);
+%     hist(subincomemap(subincomemap(:,30)~=0,30),20);
+    hist(mdninc(isubdev,j),20);
+    axis([40000 200000 0 700])
+    if j < EXPTRUNS
         set(gca,'xticklabel',[])
         title(sprintf('Income Distribution %s',strmclim{j}))
     else
         xlabel('Consumer Income')
         title(sprintf('Income Distribution %s',strmclim{j}))
     end
+    saveas(h2_1,'consumer_income_distributions','jpg')
     
     % plot build time
     % isubdev=find(subdevmap ~= 0);
@@ -638,22 +880,23 @@ for j=1:ERUNS
     saveas(h7,sprintf('avgrents_%d',j),'jpg')
 end
 
-inc=cell(1,ERUNS);
-incomedist=zeros(11,4);
-htdist=zeros(HT,ERUNS);
-rentdist=zeros(HT,ERUNS);
-for q=1:ERUNS
-    iruns=batchruns{q};
-    subincomemap=incomemap(:,batchruns{q});
-    inc(q)=mat2cell(subincomemap(subincomemap(:,30)~=0,30),...
-        length(find(subincomemap(:,30)~=0)),1);
-    incomedist(:,q)=hist(cat(1,inc{q}),[39999 56000 72000 88000 104000 ...
-        120000 136000 152000 168000 184000 200001]);
-    
-    htdist(:,q)=mean(cat(2,numltrlts{30,iruns}),2);
-    rentdist(:,q)=mean(avgrents(:,30,iruns),3);
-    
-end
+% inc=cell(1,ERUNS);
+% incomedist=zeros(11,4);
+% htdist=zeros(HT,ERUNS);
+% rentdist=zeros(HT,ERUNS);
+% for q=1:EXPTRUNS
+%     iruns=batchruns{q};
+%     subincomemap=incomemap(:,batchruns{q});
+% %     inc(q)=mat2cell(subincomemap(subincomemap(:,30)~=0,30),...
+% %         length(find(subincomemap(:,30)~=0)),1);
+%     inc(q)=mat2cell(mdninc(mdninc(:,q)~=0,q),length(find(mdninc(:,q)~=0)),1);
+%     incomedist(:,q)=hist(cat(1,inc{q}),[39999 56000 72000 88000 104000 ...
+%         120000 136000 152000 168000 184000 200001]);
+%     
+%     htdist(:,q)=mean(cat(2,numltrlts{30,iruns}),2);
+%     rentdist(:,q)=mean(avgrents(:,30,iruns),3);
+%     
+% end
 
 
 %% Plots for multiple experimental parameters

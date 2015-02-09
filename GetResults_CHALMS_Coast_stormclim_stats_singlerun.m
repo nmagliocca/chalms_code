@@ -461,7 +461,7 @@ carrycostlabel={'Carrying Cost'};
 %% Write time step file %%
 cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\results\alt_storm_climate\singlerun
 resultsfile=('Results_CHALMS_alt_storm_clim_singlerun.xlsx');
-for j=1:ERUNS
+for j=1:EXPTRUNS
     xlswrite(resultsfile,timelabel,sprintf('Time Step Stats %s',runnamelabel{j}),'C1');
     xlswrite(resultsfile,tset{:},sprintf('Time Step Stats %s',runnamelabel{j}),'C2');
     xlswrite(resultsfile,lottypelabel,sprintf('Time Step Stats %s',runnamelabel{j}),'B2');

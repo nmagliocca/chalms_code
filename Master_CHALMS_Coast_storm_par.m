@@ -3853,3 +3853,4 @@ end
     end
 end
 toc
+delete(poolobj)
