@@ -27,8 +27,8 @@ MRUNS=30;
 % number of experimental parameters
 NPARMS=1;
 % number of experimental variatons on NPARMS
-EXPTRUNS=4;
-ERUNS=EXPTRUNS^NPARMS;
+EXPTRUNS=4*7;
+ERUNS=EXPTRUNS;
 % index numbers of storm climate settings and 1:MRUNS model runs
 batchind=[reshape(repmat(1:ERUNS,MRUNS,1),MRUNS*ERUNS,1) ...
     repmat((1:MRUNS)',ERUNS,1)];
@@ -54,16 +54,16 @@ branges=[40000:16000:184000 200001];    % income distribution bins
 
 %%% Adjust this %% 
 % navigate to results file storage
-cd X:\model_results\CHALMS_alt_storm_climate
+cd X:\model_results\CHALMS_stormclim_amenityslope
 fnames=dir;
 fnamescell=struct2cell(fnames);
 % (2) change the prefix of the results file names
-h=strncmp('storm_altclim',fnamescell(1,:),10);
+h=strncmp('stormclim_amenityslope',fnamescell(1,:),22);
 hind=find(h==1);
 % add precalculated distance matrix
 cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\data_files
 load DIST2CBD_east
-cd X:\model_results\CHALMS_alt_storm_climate
+cd X:\model_results\CHALMS_stormclim_amenityslope
 distpt=ceil(min(min(dist2cbd)):max(max(dist2cbd)));
 density=zeros(NLENGTH*NWIDTH,length(hind));
 
@@ -98,7 +98,7 @@ vacrlts=zeros(length(hind),length(TSTART:TMAX));
 testpctdev=zeros(ERUNS,TMAX);
 VARLAYER=zeros(80*80,ERUNS);
 for mr=1:length(hind)   % MRUNS*EXPTRUNS
-    h=strcmp(sprintf('storm_altclim%d_%d.mat',batchind(mr,1),...
+    h=strcmp(sprintf('stormclim_amenityslope%d_%d.mat',batchind(mr,1),...
         batchind(mr,2)),fnamescell(1,:));
     filename=fnamescell{1,h};
     load(filename)
@@ -265,7 +265,7 @@ end
 mapdata_store=struct('lot_types',{LTmap},'income_map',{incomemap},...
     'amenity_prefs',{amprefmap},'house_prices',{housepricemap},...
     'build_time',{btmap},'land_sales_price',{landsales},'land_sales_time',...
-    {landsaletime});
+    {landsaletime},'average_maps',{AVGMAP});
 
 % results by housing type over time, size=[HT,TMAX,MRUNS*EXPTRUNS]
 numlts_store=cell(1,MRUNS*EXPTRUNS);
@@ -298,7 +298,9 @@ for j=1:length(hind)
 end
 aggdata_store=struct('vacany_rates',{vacrlts},'income_distribution',{incdist_cell});
 
-save results_altclim_batch_struct mapdata_store htdata_store aggdata_store
+run_indices=struct('batch_indices',{batchind});
+
+% save results_stormclim_amenityslope_batch_struct mapdata_store htdata_store aggdata_store run_indices
 
 %%
 landsale_run=cell(MRUNS,EXPTRUNS);
@@ -391,8 +393,62 @@ for i=1:EXPTRUNS
         landsalerlts_cbd(id,i,7)=lsse;
     end
 end
+% land_sales=struct('landsales_time',{landsalerlts_time},'landsales_coast',...
+%     {landsalerlts_coast},'landsales_cbd',{landsalerlts_cbd},'landsales_all',{landsale_run});
+% save results_stormclim_amenityslope_batch_struct mapdata_store htdata_store aggdata_store run_indices land_sales
+% 
+landsale_traj=landsalerlts_time(:,:,1);
+landsale_traj=landsale_traj(12:30,:)';
+landsale_traj_025=landsale_traj([1 8 15 22],:);
+landsale_traj_050=landsale_traj([2 9 16 23],:);
+landsale_traj_075=landsale_traj([3 10 17 24],:);
+landsale_traj_100=landsale_traj([4 11 18 25],:);
+landsale_traj_125=landsale_traj([5 12 19 26],:);
+landsale_traj_150=landsale_traj([6 13 20 27],:);
+landsale_traj_175=landsale_traj([7 14 21 28],:);
+
+landsale_traj_patches=zeros(7,2*length(landsale_traj(1,:))+1);
+patchx=[12:30 30:-1:12 12];
+landsale_traj_patches(1,:)=[max(landsale_traj_025,[],1) min(landsale_traj_025,[],1) max(landsale_traj_025(:,1))];
+landsale_traj_patches(2,:)=[max(landsale_traj_050,[],1) min(landsale_traj_050,[],1) max(landsale_traj_050(:,1))];
+landsale_traj_patches(3,:)=[max(landsale_traj_075,[],1) min(landsale_traj_075,[],1) max(landsale_traj_075(:,1))];
+landsale_traj_patches(4,:)=[max(landsale_traj_100,[],1) min(landsale_traj_100,[],1) max(landsale_traj_100(:,1))];
+landsale_traj_patches(5,:)=[max(landsale_traj_125,[],1) min(landsale_traj_125,[],1) max(landsale_traj_125(:,1))];
+landsale_traj_patches(6,:)=[max(landsale_traj_150,[],1) min(landsale_traj_150,[],1) max(landsale_traj_150(:,1))];
+landsale_traj_patches(7,:)=[max(landsale_traj_175,[],1) min(landsale_traj_175,[],1) max(landsale_traj_175(:,1))];
+
+figure
+patch(patchx,landsale_traj_patches(7,:),'r')
+hold on
+patch(patchx,landsale_traj_patches(6,:),'y')
+patch(patchx,landsale_traj_patches(5,:),'g')
+patch(patchx,landsale_traj_patches(4,:),'k')
+patch(patchx,landsale_traj_patches(3,:),'b')
+patch(patchx,landsale_traj_patches(2,:),'c')
+patch(patchx,landsale_traj_patches(1,:),'m')
 
 
+
+
+
+
+plot(12:30,min(landsale_traj_025,[],1),'-m','LineWidth',1.5)
+hold on
+plot(12:30,max(landsale_traj_025,[],1),'-m','LineWidth',1.5)
+plot(12:30,min(landsale_traj_050,[],1),'-c','LineWidth',1.5)
+plot(12:30,max(landsale_traj_050,[],1),'-c','LineWidth',1.5)
+plot(12:30,min(landsale_traj_075,[],1),'-b','LineWidth',1.5)
+plot(12:30,max(landsale_traj_075,[],1),'-b','LineWidth',1.5)
+plot(12:30,min(landsale_traj_100,[],1),'-k','LineWidth',1.5)
+plot(12:30,max(landsale_traj_100,[],1),'-k','LineWidth',1.5)
+plot(12:30,min(landsale_traj_125,[],1),'-g','LineWidth',1.5)
+plot(12:30,max(landsale_traj_125,[],1),'-g','LineWidth',1.5)
+plot(12:30,min(landsale_traj_150,[],1),'-y','LineWidth',1.5)
+plot(12:30,max(landsale_traj_150,[],1),'-y','LineWidth',1.5)
+plot(12:30,min(landsale_traj_175,[],1),'-r','LineWidth',1.5)
+plot(12:30,max(landsale_traj_175,[],1),'-r','LineWidth',1.5)
+legend('0.025','0.025','0.05','0.05','0.075','0.075','0.10','0.10','0.125',...
+    '0.125','0.150','0.150','0.175','0.175','Location','northwest')
 %%
 runnamelabel={'MidAtl','NC','FL','TX'};
 tset=mat2cell(TSTART:TMAX,1,length(TSTART:TMAX));
@@ -418,7 +474,7 @@ zonedenlabel={'Avg. Lot Size '};
 distlabel={'Distance from CBD'};
 distlabel_c={'Distance from Coast'};
 incomelabel={'Median Income of Occupants'};
-incdistlabel={'Median Income of Occupants'};
+incdistlabel={'Median Income Distribution (% of consumers)'};
 northincomelabel={'Mean Income of Occupants in Unzoned Region'};
 southincomelabel={'Mean Income of Occupants in Zoned Region'};
 coastincomelabel={'Mean Income of Occupants in Coastal Zone'};
@@ -466,72 +522,75 @@ proflabel={'Profit Max House Offering'};
 difflabel={'Difference'};
 dscptlabel={'Descriptive Stats'};
 carrycostlabel={'Carrying Cost'};
+binlabel={'Bin Min. ($)'};
 
-%% Write time step file %%
-cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\results\alt_storm_climate
-resultsfile=('Results_CHALMS_alt_storm_clim.xlsx');
-for j=1:EXPTRUNS
-    xlswrite(resultsfile,timelabel,sprintf('Time Step Stats %s',runnamelabel{j}),'C1');
-    xlswrite(resultsfile,tset{:},sprintf('Time Step Stats %s',runnamelabel{j}),'C2');
-    xlswrite(resultsfile,lottypelabel,sprintf('Time Step Stats %s',runnamelabel{j}),'B2');
-    xlswrite(resultsfile,lottypeset,sprintf('Time Step Stats %s',runnamelabel{j}),'B3');
-    xlswrite(resultsfile,rentlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A3');
-    rentdump=reshape(cell2mat(avgrentstats(batchruns{j})),HT,TMAX,MRUNS);
-    xlswrite(resultsfile,mean(rentdump(:,TSTART:TMAX,:),3),sprintf('Time Step Stats %s',runnamelabel{j}),'C3');
-    
-    xlswrite(resultsfile,lotlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A12');
-    xlswrite(resultsfile,lottypeset,sprintf('Time Step Stats %s',runnamelabel{j}),'B12');
-    ltdump=reshape(cell2mat(numltrlts(:,batchruns{j})),HT,TMAX,MRUNS);
-    xlswrite(resultsfile,mean(ltdump(:,TSTART:TMAX,:),3),sprintf('Time Step Stats %s',runnamelabel{j}),'C12');
-    xlswrite(resultsfile,lotsumlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'B20');
-    xlswrite(resultsfile,sum(mean(ltdump(:,TSTART:TMAX,:),3),1),sprintf('Time Step Stats %s',runnamelabel{j}),'C20');
-    
-    xlswrite(resultsfile,dscptlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A22');
-    xlswrite(resultsfile,timelabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A23');
-    xlswrite(resultsfile,tset{:},sprintf('Time Step Stats %s',runnamelabel{j}),'B23');
-    xlswrite(resultsfile,devlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A24');
-    xlswrite(resultsfile,mean(pctdev(batchruns{j},TSTART:TMAX),1),sprintf('Time Step Stats %s',runnamelabel{j}),'B24');
-    xlswrite(resultsfile,vaclabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A25');
-    xlswrite(resultsfile,avgvac(j,:),sprintf('Time Step Stats %s',runnamelabel{j}),'B25');
-    xlswrite(resultsfile,incdistlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A27');
-    xlswrite(resultsfile,incomedist(:,TSTART:TMAX,j),sprintf('Time Step Stats %s',runnamelabel{j}),'B27');
-
-    xlswrite(resultsfile,plandstatslabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A29');
-    xlswrite(resultsfile,plandtimelabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A30');
-    xlswrite(resultsfile,tlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A31');
-    xlswrite(resultsfile,meanlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A32');
-    xlswrite(resultsfile,maxlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A33');
-    xlswrite(resultsfile,minlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A34');
-    xlswrite(resultsfile,sigmalabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A35');
-    xlswrite(resultsfile,statlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A36');
-    xlswrite(resultsfile,tset{:},sprintf('Time Step Stats %s',runnamelabel{j}),'B31');
-    xlswrite(resultsfile,reshape(landsalerlts_time(TSTART:TMAX,j,:),length(TSTART:TMAX),7)',...
-        sprintf('Time Step Stats %s',runnamelabel{j}),'B32');
-    
-    xlswrite(resultsfile,plandstatslabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A40');
-    xlswrite(resultsfile,planddistclabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A41');
-    xlswrite(resultsfile,dlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A42');
-    xlswrite(resultsfile,meanlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A43');
-    xlswrite(resultsfile,maxlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A44');
-    xlswrite(resultsfile,minlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A45');
-    xlswrite(resultsfile,sigmalabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A46');
-    xlswrite(resultsfile,statlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A47');
-    xlswrite(resultsfile,cdistlabel{:},sprintf('Time Step Stats %s',runnamelabel{j}),'B42');
-    xlswrite(resultsfile,reshape(landsalerlts_coast(:,j,:),8,7)',...
-        sprintf('Time Step Stats %s',runnamelabel{j}),'B43');
-    
-    xlswrite(resultsfile,plandstatslabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A51');
-    xlswrite(resultsfile,planddistclabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A52');
-    xlswrite(resultsfile,dlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A53');
-    xlswrite(resultsfile,meanlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A54');
-    xlswrite(resultsfile,maxlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A55');
-    xlswrite(resultsfile,minlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A56');
-    xlswrite(resultsfile,sigmalabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A57');
-    xlswrite(resultsfile,statlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A58');
-    xlswrite(resultsfile,cbddistlabel{:},sprintf('Time Step Stats %s',runnamelabel{j}),'B53');
-    xlswrite(resultsfile,reshape(landsalerlts_cbd(:,j,:),11,7)',...
-        sprintf('Time Step Stats %s',runnamelabel{j}),'B54');
-end
+% %% Write time step file %%
+% cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\results\stormlcim_amenityslope
+% resultsfile=('Results_CHALMS_stormclim_amenityslope.xlsx');
+% for j=1:EXPTRUNS
+%     xlswrite(resultsfile,timelabel,sprintf('Time Step Stats %s',runnamelabel{j}),'C1');
+%     xlswrite(resultsfile,tset{:},sprintf('Time Step Stats %s',runnamelabel{j}),'C2');
+%     xlswrite(resultsfile,lottypelabel,sprintf('Time Step Stats %s',runnamelabel{j}),'B2');
+%     xlswrite(resultsfile,lottypeset,sprintf('Time Step Stats %s',runnamelabel{j}),'B3');
+%     xlswrite(resultsfile,rentlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A3');
+%     rentdump=reshape(cell2mat(avgrentstats(batchruns{j})),HT,TMAX,MRUNS);
+%     xlswrite(resultsfile,mean(rentdump(:,TSTART:TMAX,:),3),sprintf('Time Step Stats %s',runnamelabel{j}),'C3');
+%     
+%     xlswrite(resultsfile,lotlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A12');
+%     xlswrite(resultsfile,lottypeset,sprintf('Time Step Stats %s',runnamelabel{j}),'B12');
+%     ltdump=reshape(cell2mat(numltrlts(:,batchruns{j})),HT,TMAX,MRUNS);
+%     xlswrite(resultsfile,mean(ltdump(:,TSTART:TMAX,:),3),sprintf('Time Step Stats %s',runnamelabel{j}),'C12');
+%     xlswrite(resultsfile,lotsumlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'B20');
+%     xlswrite(resultsfile,sum(mean(ltdump(:,TSTART:TMAX,:),3),1),sprintf('Time Step Stats %s',runnamelabel{j}),'C20');
+%     
+%     xlswrite(resultsfile,dscptlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A22');
+%     xlswrite(resultsfile,timelabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A23');
+%     xlswrite(resultsfile,tset{:},sprintf('Time Step Stats %s',runnamelabel{j}),'B23');
+%     xlswrite(resultsfile,devlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A24');
+%     xlswrite(resultsfile,mean(pctdev(batchruns{j},TSTART:TMAX),1),sprintf('Time Step Stats %s',runnamelabel{j}),'B24');
+%     xlswrite(resultsfile,vaclabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A25');
+%     xlswrite(resultsfile,avgvac(j,:),sprintf('Time Step Stats %s',runnamelabel{j}),'B25');
+%     xlswrite(resultsfile,incdistlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A27');
+%     xlswrite(resultsfile,binlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A28');
+%     xlswrite(resultsfile,branges',sprintf('Time Step Stats %s',runnamelabel{j}),'B28');
+%     xlswrite(resultsfile,incomedist(:,TSTART:TMAX,j),sprintf('Time Step Stats %s',runnamelabel{j}),'C28');
+% 
+%     xlswrite(resultsfile,plandstatslabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A39');
+%     xlswrite(resultsfile,plandtimelabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A40');
+%     xlswrite(resultsfile,tlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A41');
+%     xlswrite(resultsfile,meanlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A42');
+%     xlswrite(resultsfile,maxlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A43');
+%     xlswrite(resultsfile,minlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A44');
+%     xlswrite(resultsfile,sigmalabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A45');
+%     xlswrite(resultsfile,statlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A46');
+%     xlswrite(resultsfile,tset{:},sprintf('Time Step Stats %s',runnamelabel{j}),'B41');
+%     xlswrite(resultsfile,reshape(landsalerlts_time(TSTART:TMAX,j,:),length(TSTART:TMAX),7)',...
+%         sprintf('Time Step Stats %s',runnamelabel{j}),'B42');
+%     
+%     xlswrite(resultsfile,plandstatslabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A50');
+%     xlswrite(resultsfile,planddistclabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A51');
+%     xlswrite(resultsfile,dlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A52');
+%     xlswrite(resultsfile,meanlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A53');
+%     xlswrite(resultsfile,maxlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A54');
+%     xlswrite(resultsfile,minlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A55');
+%     xlswrite(resultsfile,sigmalabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A56');
+%     xlswrite(resultsfile,statlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A57');
+%     xlswrite(resultsfile,cdistlabel{:},sprintf('Time Step Stats %s',runnamelabel{j}),'B52');
+%     xlswrite(resultsfile,reshape(landsalerlts_coast(:,j,:),8,7)',...
+%         sprintf('Time Step Stats %s',runnamelabel{j}),'B53');
+%     
+%     xlswrite(resultsfile,plandstatslabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A61');
+%     xlswrite(resultsfile,planddistclabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A62');
+%     xlswrite(resultsfile,dlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A63');
+%     xlswrite(resultsfile,meanlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A64');
+%     xlswrite(resultsfile,maxlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A65');
+%     xlswrite(resultsfile,minlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A66');
+%     xlswrite(resultsfile,sigmalabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A67');
+%     xlswrite(resultsfile,statlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A68');
+%     xlswrite(resultsfile,cbddistlabel{:},sprintf('Time Step Stats %s',runnamelabel{j}),'B63');
+%     xlswrite(resultsfile,reshape(landsalerlts_cbd(:,j,:),11,7)',...
+%         sprintf('Time Step Stats %s',runnamelabel{j}),'B64');
+% end
 
 %% Single run comparisons
 % irun1=(batchind(:,2)==1);
@@ -657,7 +716,7 @@ end
 % 
 %% Create figures and results
 
-cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\figs\alt_stormclim
+cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\figs\stormclim_amenityslope
 
 % resultsfile='baseline_results_070314.txt';
 % save(resultsfile,'avgvac','avgpctdev','-ascii')
@@ -743,21 +802,21 @@ for j=1:EXPTRUNS
     set(get(gca,'Title'),'Visible','on')
     saveas(h2,sprintf('final_consumer_income_%d',j),'jpg')
     
-    figure(h2_1);
-    orient tall
-    set(h2_1, 'Color','white','OuterPosition',[1,1,400,700],'Visible','off');
-    subplot(EXPTRUNS,1,j);
-%     hist(subincomemap(subincomemap(:,30)~=0,30),20);
-    hist(mdninc(isubdev,j),20);
-    axis([40000 200000 0 700])
-    if j < EXPTRUNS
-        set(gca,'xticklabel',[])
-        title(sprintf('Income Distribution %s',strmclim{j}))
-    else
-        xlabel('Consumer Income')
-        title(sprintf('Income Distribution %s',strmclim{j}))
-    end
-    saveas(h2_1,'consumer_income_distributions','jpg')
+%     figure(h2_1);
+%     orient tall
+%     set(h2_1, 'Color','white','OuterPosition',[1,1,400,700],'Visible','off');
+%     subplot(EXPTRUNS,1,j);
+% %     hist(subincomemap(subincomemap(:,30)~=0,30),20);
+%     hist(mdninc(isubdev,j),20);
+%     axis([40000 200000 0 700])
+%     if j < EXPTRUNS
+%         set(gca,'xticklabel',[])
+%         title(sprintf('Income Distribution %s',strmclim{j}))
+%     else
+%         xlabel('Consumer Income')
+%         title(sprintf('Income Distribution %s',strmclim{j}))
+%     end
+%     saveas(h2_1,'consumer_income_distributions','jpg')
     
     % plot build time
     % isubdev=find(subdevmap ~= 0);
@@ -818,7 +877,7 @@ for j=1:EXPTRUNS
 %     CMAP=colormap;
 %     CMAP(1,:)=[1 1 1];
 %     colormap(h5,CMAP);
-    set(gca,'clim',[0 13000])
+    set(gca,'clim',[0 20000])
 %     set(gca,'Visible','off')
     set(gca,'xticklabel',[],'yticklabel',[])
     colorbar;
@@ -827,7 +886,7 @@ for j=1:EXPTRUNS
     subplot(2,1,2);
     imagesc(reshape(varlandsale(:,j),NLENGTH,NWIDTH));
 %     set(gca,'Visible','off')
-    set(gca,'clim',[0 12000000])
+    set(gca,'clim',[0 20000000])
     set(gca,'xticklabel',[],'yticklabel',[])
     colorbar;
     title('Variance in Land Sales');
@@ -899,173 +958,173 @@ end
 % end
 
 
-%% Plots for multiple experimental parameters
-
-%%%% Summary plots
-% Build Time
-h_bt=figure;
-set(h_bt,'Color','white','visible','off');
-for k=1:ERUNS
-    % xaxis = lvset
-    %yaxis = am_slope
-    subtightplot(5,5,k,0.01,0.1,0.05);
-    imagesc(reshape(avgbt(:,k),NLENGTH,NWIDTH))
-    set(gca,'xticklabel',[],'yticklabel',[])
-    if isempty(find(ismember(1:5,k),1))==0
-        title(sprintf('lv(%0.2f)',double(batchparms_unq(k,2))))
-    end
-    icol=ismember([1 6 11 16 21],k);
-    if isempty(find(icol,1))==0
-        ylabel(sprintf('am(%0.3f)',double(batchparms_unq(icol,1))))
-    end
-    if k==23
-        xlabel('Build Time (baseline: (0.1,1.0)','FontSize',14)
-    end
-end
-saveas(h_bt,'summary_build_time','jpg')
-
-h_ent=figure;
-set(h_ent, 'Color','white','Visible','off');
-for b=1:ERUNS
-    subtightplot(5,5,b,0.01,0.1,0.05);
-    plot(10:30,mean(htentropy(batchruns{b},10:30),1),'--k')
-    hold on
-    plot(10:30,min(htentropy(batchruns{b},10:30),[],1),'-b','LineWidth',0.5)
-    plot(10:30,max(htentropy(batchruns{b},10:30),[],1),'-b','LineWidth',0.5)
-    if b == 25
-        set(gca,'yaxislocation','right')
-    elseif b==23
-        set(gca,'xticklabel',[],'yticklabel',[])
-        xlabel('Avg. Entropy (baseline: (0.1,1.0)','FontSize',14)
-    else
-        set(gca,'xticklabel',[],'yticklabel',[])
-    end
-    if isempty(find(ismember(1:5,b),1))==0
-        title(sprintf('lv(%0.2f)',double(batchparms_unq(b,2))))
-    end
-    icol=ismember([1 6 11 16 21],b);
-    if isempty(find(icol,1))==0
-        ylabel(sprintf('am(%0.3f)',double(batchparms_unq(icol,1))))
-    end 
-end
-saveas(h_ent,'summary_entropy','jpg')
-
-% Average Map
-h_avm=figure;
-set(h_avm,'Color','white','visible','off');
-for k=1:ERUNS
-    % xaxis = lvset
-    %yaxis = am_slope
-    subtightplot(5,5,k,0.01,0.1,0.05);
-    imagesc(AVGMAP(:,:,30,k))
-    set(gca,'xticklabel',[],'yticklabel',[])
-    if isempty(find(ismember(1:5,k),1))==0
-        title(sprintf('lv(%0.2f)',double(batchparms_unq(k,2))))
-    end
-    icol=ismember([1 6 11 16 21],k);
-    if isempty(find(icol,1))==0
-        ylabel(sprintf('am(%0.3f)',double(batchparms_unq(icol,1))))
-    end
-    if k==23
-        xlabel('Avg. Map t=30 (baseline: (0.1,1.0)','FontSize',14)
-    end
-end
-saveas(h_avm,'summary_avgmap','jpg')
-
-% avg rents
-avgrent_mat=cell(EXPTRUNS);
-incdist_mat=cell(EXPTRUNS);
-landsale_mat=cell(EXPTRUNS);
-for jj=1:ERUNS
-    % aggregate results for each parameter combo (n=30) and organize
-    % according to plotting procedure to ensure the correct assignment of
-    % results to parm settings.
-    [ic,ir]=ind2sub([EXPTRUNS EXPTRUNS],jj);
-    iruns=(matguide(:,1) == ir & matguide(:,2) == ic);
-    avgrent_mat(ir,ic)=mat2cell(median(avgrents(:,TMAX,iruns),3),HT,1);
-    incdist_mat(ir,ic)=mat2cell(histc(mdninc(mdninc(:,jj)~=0,jj),...
-        linspace(20000,200000,20)),20,1);
-    landsale_mat(ir,ic)=mat2cell(histc(unique(avglandsale(avglandsale(:,jj)~=0,jj)),...
-        linspace(min(min(avglandsale)),max(max(avglandsale)),10)),10,1);
-end
-    
-h_rent=figure;
-set(h_rent,'Color','white','visible','off');
-for a=1:ERUNS
-    % plot avgrent histogram
-    [ic,ir]=ind2sub([EXPTRUNS EXPTRUNS],a);
-    subtightplot(5,5,a,0.01,0.1,0.05);
-    bar(avgrent_mat{ir,ic})
-    axis([0.5 8.5 0 22000]);
-    if isempty(find(ismember([5 10 15 20],a),1))==0
-         set(gca,'xticklabel',[],'yaxislocation','right')
-    elseif a == 25
-        set(gca,'yaxislocation','right')
-    elseif a==23
-        set(gca,'xticklabel',[],'yticklabel',[])
-        xlabel('Avg. Rent t=30 (baseline: (0.1,1.0)','FontSize',14)
-    else
-        set(gca,'xticklabel',[],'yticklabel',[])
-    end
-    if isempty(find(ismember(1:5,a),1))==0
-        title(sprintf('lv(%0.2f)',double(batchparms_unq(a,2))))
-    end
-    icol=ismember([1 6 11 16 21],a);
-    if isempty(find(icol,1))==0
-        ylabel(sprintf('am(%0.3f)',double(batchparms_unq(icol,1))))
-    end 
-end
-
-h_inc=figure;
-set(h_inc,'visible','off');
-for a=1:ERUNS
-    % plot inc. dist. histogram
-    [ic,ir]=ind2sub([EXPTRUNS EXPTRUNS],a);
-    subtightplot(5,5,a,0.01,0.1,0.05);
-    bar(linspace(20000,200000,20),incdist_mat{ir,ic},'histc')
-    axis([10000 210000 0 750])
-    if isempty(find(ismember([5 10 15 20],a),1))==0
-         set(gca,'xticklabel',[],'yaxislocation','right')
-    elseif a == 25
-        set(gca,'yaxislocation','right')
-    elseif a==23
-        set(gca,'xticklabel',[],'yticklabel',[])
-        xlabel('Income t=30 (baseline: (0.1,1.0)','FontSize',14)
-    else
-        set(gca,'xticklabel',[],'yticklabel',[])
-    end
-    if isempty(find(ismember(1:5,a),1))==0
-        title(sprintf('lv(%0.2f)',double(batchparms_unq(a,2))))
-    end
-    icol=ismember([1 6 11 16 21],a);
-    if isempty(find(icol,1))==0
-        ylabel(sprintf('am(%0.3f)',double(batchparms_unq(icol,1))))
-    end 
-end
-saveas(h_inc,'summary_incdist','jpg')
-
-h_ls=figure;
-set(h_ls,'visible','off');
-for a=1:ERUNS
-    % plot inc. dist. histogram
-    [ic,ir]=ind2sub([EXPTRUNS EXPTRUNS],a);
-    subtightplot(5,5,a,0.01,0.1,0.05);
-    bar(linspace(min(min(avglandsale)),max(max(avglandsale)),10),landsale_mat{ir,ic},'histc')
-    axis([500 27000 0 40])
-    if a == 25
-        set(gca,'yaxislocation','right')
-    elseif a==23
-        set(gca,'xticklabel',[],'yticklabel',[])
-        xlabel('Land Sales t=30 (baseline: (0.1,1.0)','FontSize',14)
-    else
-        set(gca,'xticklabel',[],'yticklabel',[])
-    end
-    if isempty(find(ismember(1:5,a),1))==0
-        title(sprintf('lv(%0.2f)',double(batchparms_unq(a,2))))
-    end
-    icol=ismember([1 6 11 16 21],a);
-    if isempty(find(icol,1))==0
-        ylabel(sprintf('am(%0.3f)',double(batchparms_unq(icol,1))))
-    end 
-end
-saveas(h_ls,'summary_landsales','jpg')
+% %% Plots for multiple experimental parameters
+% 
+% %%%% Summary plots
+% % Build Time
+% h_bt=figure;
+% set(h_bt,'Color','white','visible','off');
+% for k=1:ERUNS
+%     % xaxis = lvset
+%     %yaxis = am_slope
+%     subtightplot(5,5,k,0.01,0.1,0.05);
+%     imagesc(reshape(avgbt(:,k),NLENGTH,NWIDTH))
+%     set(gca,'xticklabel',[],'yticklabel',[])
+%     if isempty(find(ismember(1:5,k),1))==0
+%         title(sprintf('lv(%0.2f)',double(batchparms_unq(k,2))))
+%     end
+%     icol=ismember([1 6 11 16 21],k);
+%     if isempty(find(icol,1))==0
+%         ylabel(sprintf('am(%0.3f)',double(batchparms_unq(icol,1))))
+%     end
+%     if k==23
+%         xlabel('Build Time (baseline: (0.1,1.0)','FontSize',14)
+%     end
+% end
+% saveas(h_bt,'summary_build_time','jpg')
+% 
+% h_ent=figure;
+% set(h_ent, 'Color','white','Visible','off');
+% for b=1:ERUNS
+%     subtightplot(5,5,b,0.01,0.1,0.05);
+%     plot(10:30,mean(htentropy(batchruns{b},10:30),1),'--k')
+%     hold on
+%     plot(10:30,min(htentropy(batchruns{b},10:30),[],1),'-b','LineWidth',0.5)
+%     plot(10:30,max(htentropy(batchruns{b},10:30),[],1),'-b','LineWidth',0.5)
+%     if b == 25
+%         set(gca,'yaxislocation','right')
+%     elseif b==23
+%         set(gca,'xticklabel',[],'yticklabel',[])
+%         xlabel('Avg. Entropy (baseline: (0.1,1.0)','FontSize',14)
+%     else
+%         set(gca,'xticklabel',[],'yticklabel',[])
+%     end
+%     if isempty(find(ismember(1:5,b),1))==0
+%         title(sprintf('lv(%0.2f)',double(batchparms_unq(b,2))))
+%     end
+%     icol=ismember([1 6 11 16 21],b);
+%     if isempty(find(icol,1))==0
+%         ylabel(sprintf('am(%0.3f)',double(batchparms_unq(icol,1))))
+%     end 
+% end
+% saveas(h_ent,'summary_entropy','jpg')
+% 
+% % Average Map
+% h_avm=figure;
+% set(h_avm,'Color','white','visible','off');
+% for k=1:ERUNS
+%     % xaxis = lvset
+%     %yaxis = am_slope
+%     subtightplot(5,5,k,0.01,0.1,0.05);
+%     imagesc(AVGMAP(:,:,30,k))
+%     set(gca,'xticklabel',[],'yticklabel',[])
+%     if isempty(find(ismember(1:5,k),1))==0
+%         title(sprintf('lv(%0.2f)',double(batchparms_unq(k,2))))
+%     end
+%     icol=ismember([1 6 11 16 21],k);
+%     if isempty(find(icol,1))==0
+%         ylabel(sprintf('am(%0.3f)',double(batchparms_unq(icol,1))))
+%     end
+%     if k==23
+%         xlabel('Avg. Map t=30 (baseline: (0.1,1.0)','FontSize',14)
+%     end
+% end
+% saveas(h_avm,'summary_avgmap','jpg')
+% 
+% % avg rents
+% avgrent_mat=cell(EXPTRUNS);
+% incdist_mat=cell(EXPTRUNS);
+% landsale_mat=cell(EXPTRUNS);
+% for jj=1:ERUNS
+%     % aggregate results for each parameter combo (n=30) and organize
+%     % according to plotting procedure to ensure the correct assignment of
+%     % results to parm settings.
+%     [ic,ir]=ind2sub([EXPTRUNS EXPTRUNS],jj);
+%     iruns=(matguide(:,1) == ir & matguide(:,2) == ic);
+%     avgrent_mat(ir,ic)=mat2cell(median(avgrents(:,TMAX,iruns),3),HT,1);
+%     incdist_mat(ir,ic)=mat2cell(histc(mdninc(mdninc(:,jj)~=0,jj),...
+%         linspace(20000,200000,20)),20,1);
+%     landsale_mat(ir,ic)=mat2cell(histc(unique(avglandsale(avglandsale(:,jj)~=0,jj)),...
+%         linspace(min(min(avglandsale)),max(max(avglandsale)),10)),10,1);
+% end
+%     
+% h_rent=figure;
+% set(h_rent,'Color','white','visible','off');
+% for a=1:ERUNS
+%     % plot avgrent histogram
+%     [ic,ir]=ind2sub([EXPTRUNS EXPTRUNS],a);
+%     subtightplot(5,5,a,0.01,0.1,0.05);
+%     bar(avgrent_mat{ir,ic})
+%     axis([0.5 8.5 0 22000]);
+%     if isempty(find(ismember([5 10 15 20],a),1))==0
+%          set(gca,'xticklabel',[],'yaxislocation','right')
+%     elseif a == 25
+%         set(gca,'yaxislocation','right')
+%     elseif a==23
+%         set(gca,'xticklabel',[],'yticklabel',[])
+%         xlabel('Avg. Rent t=30 (baseline: (0.1,1.0)','FontSize',14)
+%     else
+%         set(gca,'xticklabel',[],'yticklabel',[])
+%     end
+%     if isempty(find(ismember(1:5,a),1))==0
+%         title(sprintf('lv(%0.2f)',double(batchparms_unq(a,2))))
+%     end
+%     icol=ismember([1 6 11 16 21],a);
+%     if isempty(find(icol,1))==0
+%         ylabel(sprintf('am(%0.3f)',double(batchparms_unq(icol,1))))
+%     end 
+% end
+% 
+% h_inc=figure;
+% set(h_inc,'visible','off');
+% for a=1:ERUNS
+%     % plot inc. dist. histogram
+%     [ic,ir]=ind2sub([EXPTRUNS EXPTRUNS],a);
+%     subtightplot(5,5,a,0.01,0.1,0.05);
+%     bar(linspace(20000,200000,20),incdist_mat{ir,ic},'histc')
+%     axis([10000 210000 0 750])
+%     if isempty(find(ismember([5 10 15 20],a),1))==0
+%          set(gca,'xticklabel',[],'yaxislocation','right')
+%     elseif a == 25
+%         set(gca,'yaxislocation','right')
+%     elseif a==23
+%         set(gca,'xticklabel',[],'yticklabel',[])
+%         xlabel('Income t=30 (baseline: (0.1,1.0)','FontSize',14)
+%     else
+%         set(gca,'xticklabel',[],'yticklabel',[])
+%     end
+%     if isempty(find(ismember(1:5,a),1))==0
+%         title(sprintf('lv(%0.2f)',double(batchparms_unq(a,2))))
+%     end
+%     icol=ismember([1 6 11 16 21],a);
+%     if isempty(find(icol,1))==0
+%         ylabel(sprintf('am(%0.3f)',double(batchparms_unq(icol,1))))
+%     end 
+% end
+% saveas(h_inc,'summary_incdist','jpg')
+% 
+% h_ls=figure;
+% set(h_ls,'visible','off');
+% for a=1:ERUNS
+%     % plot inc. dist. histogram
+%     [ic,ir]=ind2sub([EXPTRUNS EXPTRUNS],a);
+%     subtightplot(5,5,a,0.01,0.1,0.05);
+%     bar(linspace(min(min(avglandsale)),max(max(avglandsale)),10),landsale_mat{ir,ic},'histc')
+%     axis([500 27000 0 40])
+%     if a == 25
+%         set(gca,'yaxislocation','right')
+%     elseif a==23
+%         set(gca,'xticklabel',[],'yticklabel',[])
+%         xlabel('Land Sales t=30 (baseline: (0.1,1.0)','FontSize',14)
+%     else
+%         set(gca,'xticklabel',[],'yticklabel',[])
+%     end
+%     if isempty(find(ismember(1:5,a),1))==0
+%         title(sprintf('lv(%0.2f)',double(batchparms_unq(a,2))))
+%     end
+%     icol=ismember([1 6 11 16 21],a);
+%     if isempty(find(icol,1))==0
+%         ylabel(sprintf('am(%0.3f)',double(batchparms_unq(icol,1))))
+%     end 
+% end
+% saveas(h_ls,'summary_landsales','jpg')

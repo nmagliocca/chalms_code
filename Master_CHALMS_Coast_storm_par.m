@@ -4,7 +4,7 @@
 clear
 tic
 
-EXPTRUNS=4;
+EXPTRUNS=4*7;
 MRUNS=30;
 % parpool(max(EXPTRUNS,12))
 stream=RandStream.create('mrg32k3a','Seed',13);
@@ -40,7 +40,7 @@ addAttachedFiles(poolobj,{'load_expmntlparms_storm.m','loadempdata.m',...
 
 
 %%
-for erun=1:EXPTRUNS
+for erun=26:EXPTRUNS
     
     %     rndstr.SubStream=erun;
     parfor mrun=1:MRUNS
@@ -3817,7 +3817,7 @@ end
         
        
 %         ndate=datestr(date,'ddmmyy');
-        savefname=sprintf('storm_altclim%d_%d.mat',erun,mrun);
+        savefname=sprintf('stormclim_amenityslope%d_%d.mat',erun,mrun);
         parsave_storm(savefname,...
             consumerstats,vacstats,BUILDTIME,VACLAND,RENT,RETURN,LOTTYPE,...
             BASELAYER,Rpop,Rvacrate,Rvaclots,numlt,Rleftoverpop,avgrentdynms,...

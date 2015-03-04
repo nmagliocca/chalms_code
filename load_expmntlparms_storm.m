@@ -7,8 +7,11 @@ function [am0,am_slope,ampref_max,ampref_min,maxPflood,highrisk,stormfreq,maxdam
 % Coastal Amenity
 % am0=linspace(200000,800000,EXPTRUNS);
 am0=500000*ones(1,EXPTRUNS);        %baseline
-% am_slope=linspace(0.025,0.125,EXPTRUNS);
-am_slope=0.1*ones(1,EXPTRUNS);      %baseline
+am_slope_parms=[0.025 0.05 0.075 0.1 0.125 0.15 0.175];
+am_slope=repmat(am_slope_parms,1,4);
+% % am_slope=repmat(reshape(repmat(am_slope_parms,MRUNS,1),MRUNS*...
+% %     length(am_slope_parms),1),4,1);
+% am_slope=0.1*ones(1,EXPTRUNS);      %baseline
 
 % Consumer preferences
 ampref_max=0.9*ones(1,EXPTRUNS);    %baseline
@@ -19,7 +22,11 @@ maxPflood=0.7*ones(1,EXPTRUNS);     %baseline
 highrisk=30*ones(1,EXPTRUNS);       %baseline
 maxdam=ones(1,EXPTRUNS);            %baseline
 % stormfreq=ones(1,EXPTRUNS);         %baseline
-stormfreq=linspace(1,4,EXPTRUNS);         
+stormfreq_parms=[1 2 3 4];
+stormfreq=reshape(repmat(stormfreq_parms,length(am_slope_parms),1),...
+    length(am_slope_parms)*length(stormfreq_parms),1)'; 
+% % stormfreq=reshape(repmat(stormfreq_parms,MRUNS*length(am_slope_parms),1),...
+% %     MRUNS*length(am_slope_parms)*length(stormfreq_parms),1);         
 
 % stormthresh=15*ones(1,EXPTRUNS);
 % Cdam=0.5*ones(1,EXPTRUNS);
