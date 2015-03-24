@@ -27,7 +27,7 @@ MRUNS=30;
 % number of experimental parameters
 NPARMS=1;
 % number of experimental variatons on NPARMS
-EXPTRUNS=4*7;
+EXPTRUNS=3;
 ERUNS=EXPTRUNS;
 % index numbers of storm climate settings and 1:MRUNS model runs
 batchind=[reshape(repmat(1:ERUNS,MRUNS,1),MRUNS*ERUNS,1) ...
@@ -54,16 +54,16 @@ branges=[40000:16000:184000 200001];    % income distribution bins
 
 %%% Adjust this %% 
 % navigate to results file storage
-cd X:\model_results\CHALMS_stormclim_amenityslope
+cd X:\model_results\CHALMS_coast_032315
 fnames=dir;
 fnamescell=struct2cell(fnames);
 % (2) change the prefix of the results file names
-h=strncmp('stormclim_amenityslope',fnamescell(1,:),22);
+h=strncmp('coast_baseline',fnamescell(1,:),14);
 hind=find(h==1);
 % add precalculated distance matrix
 cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\data_files
 load DIST2CBD_east
-cd X:\model_results\CHALMS_stormclim_amenityslope
+cd X:\model_results\CHALMS_coast_032315
 distpt=ceil(min(min(dist2cbd)):max(max(dist2cbd)));
 density=zeros(NLENGTH*NWIDTH,length(hind));
 
@@ -98,7 +98,7 @@ vacrlts=zeros(length(hind),length(TSTART:TMAX));
 testpctdev=zeros(ERUNS,TMAX);
 VARLAYER=zeros(80*80,ERUNS);
 for mr=1:length(hind)   % MRUNS*EXPTRUNS
-    h=strcmp(sprintf('stormclim_amenityslope%d_%d.mat',batchind(mr,1),...
+    h=strcmp(sprintf('coast_baseline%d_%d.mat',batchind(mr,1),...
         batchind(mr,2)),fnamescell(1,:));
     filename=fnamescell{1,h};
     load(filename)
@@ -393,62 +393,64 @@ for i=1:EXPTRUNS
         landsalerlts_cbd(id,i,7)=lsse;
     end
 end
-% land_sales=struct('landsales_time',{landsalerlts_time},'landsales_coast',...
-%     {landsalerlts_coast},'landsales_cbd',{landsalerlts_cbd},'landsales_all',{landsale_run});
-% save results_stormclim_amenityslope_batch_struct mapdata_store htdata_store aggdata_store run_indices land_sales
+land_sales=struct('landsales_time',{landsalerlts_time},'landsales_coast',...
+    {landsalerlts_coast},'landsales_cbd',{landsalerlts_cbd},'landsales_all',{landsale_run});
+save results_coast_baseline_batch_struct mapdata_store htdata_store aggdata_store run_indices land_sales
+
+
+% %%% Plot land price trajectories
+% landsale_traj=landsalerlts_time(:,:,1);
+% landsale_traj=landsale_traj(12:30,:)';
+% landsale_traj_025=landsale_traj([1 8 15 22],:);
+% landsale_traj_050=landsale_traj([2 9 16 23],:);
+% landsale_traj_075=landsale_traj([3 10 17 24],:);
+% landsale_traj_100=landsale_traj([4 11 18 25],:);
+% landsale_traj_125=landsale_traj([5 12 19 26],:);
+% landsale_traj_150=landsale_traj([6 13 20 27],:);
+% landsale_traj_175=landsale_traj([7 14 21 28],:);
 % 
-landsale_traj=landsalerlts_time(:,:,1);
-landsale_traj=landsale_traj(12:30,:)';
-landsale_traj_025=landsale_traj([1 8 15 22],:);
-landsale_traj_050=landsale_traj([2 9 16 23],:);
-landsale_traj_075=landsale_traj([3 10 17 24],:);
-landsale_traj_100=landsale_traj([4 11 18 25],:);
-landsale_traj_125=landsale_traj([5 12 19 26],:);
-landsale_traj_150=landsale_traj([6 13 20 27],:);
-landsale_traj_175=landsale_traj([7 14 21 28],:);
-
-landsale_traj_patches=zeros(7,2*length(landsale_traj(1,:))+1);
-patchx=[12:30 30:-1:12 12];
-landsale_traj_patches(1,:)=[max(landsale_traj_025,[],1) min(landsale_traj_025,[],1) max(landsale_traj_025(:,1))];
-landsale_traj_patches(2,:)=[max(landsale_traj_050,[],1) min(landsale_traj_050,[],1) max(landsale_traj_050(:,1))];
-landsale_traj_patches(3,:)=[max(landsale_traj_075,[],1) min(landsale_traj_075,[],1) max(landsale_traj_075(:,1))];
-landsale_traj_patches(4,:)=[max(landsale_traj_100,[],1) min(landsale_traj_100,[],1) max(landsale_traj_100(:,1))];
-landsale_traj_patches(5,:)=[max(landsale_traj_125,[],1) min(landsale_traj_125,[],1) max(landsale_traj_125(:,1))];
-landsale_traj_patches(6,:)=[max(landsale_traj_150,[],1) min(landsale_traj_150,[],1) max(landsale_traj_150(:,1))];
-landsale_traj_patches(7,:)=[max(landsale_traj_175,[],1) min(landsale_traj_175,[],1) max(landsale_traj_175(:,1))];
-
-figure
-patch(patchx,landsale_traj_patches(7,:),'r')
-hold on
-patch(patchx,landsale_traj_patches(6,:),'y')
-patch(patchx,landsale_traj_patches(5,:),'g')
-patch(patchx,landsale_traj_patches(4,:),'k')
-patch(patchx,landsale_traj_patches(3,:),'b')
-patch(patchx,landsale_traj_patches(2,:),'c')
-patch(patchx,landsale_traj_patches(1,:),'m')
-
-
-
-
-
-
-plot(12:30,min(landsale_traj_025,[],1),'-m','LineWidth',1.5)
-hold on
-plot(12:30,max(landsale_traj_025,[],1),'-m','LineWidth',1.5)
-plot(12:30,min(landsale_traj_050,[],1),'-c','LineWidth',1.5)
-plot(12:30,max(landsale_traj_050,[],1),'-c','LineWidth',1.5)
-plot(12:30,min(landsale_traj_075,[],1),'-b','LineWidth',1.5)
-plot(12:30,max(landsale_traj_075,[],1),'-b','LineWidth',1.5)
-plot(12:30,min(landsale_traj_100,[],1),'-k','LineWidth',1.5)
-plot(12:30,max(landsale_traj_100,[],1),'-k','LineWidth',1.5)
-plot(12:30,min(landsale_traj_125,[],1),'-g','LineWidth',1.5)
-plot(12:30,max(landsale_traj_125,[],1),'-g','LineWidth',1.5)
-plot(12:30,min(landsale_traj_150,[],1),'-y','LineWidth',1.5)
-plot(12:30,max(landsale_traj_150,[],1),'-y','LineWidth',1.5)
-plot(12:30,min(landsale_traj_175,[],1),'-r','LineWidth',1.5)
-plot(12:30,max(landsale_traj_175,[],1),'-r','LineWidth',1.5)
-legend('0.025','0.025','0.05','0.05','0.075','0.075','0.10','0.10','0.125',...
-    '0.125','0.150','0.150','0.175','0.175','Location','northwest')
+% landsale_traj_patches=zeros(7,2*length(landsale_traj(1,:))+1);
+% patchx=[12:30 30:-1:12 12];
+% landsale_traj_patches(1,:)=[max(landsale_traj_025,[],1) min(landsale_traj_025,[],1) max(landsale_traj_025(:,1))];
+% landsale_traj_patches(2,:)=[max(landsale_traj_050,[],1) min(landsale_traj_050,[],1) max(landsale_traj_050(:,1))];
+% landsale_traj_patches(3,:)=[max(landsale_traj_075,[],1) min(landsale_traj_075,[],1) max(landsale_traj_075(:,1))];
+% landsale_traj_patches(4,:)=[max(landsale_traj_100,[],1) min(landsale_traj_100,[],1) max(landsale_traj_100(:,1))];
+% landsale_traj_patches(5,:)=[max(landsale_traj_125,[],1) min(landsale_traj_125,[],1) max(landsale_traj_125(:,1))];
+% landsale_traj_patches(6,:)=[max(landsale_traj_150,[],1) min(landsale_traj_150,[],1) max(landsale_traj_150(:,1))];
+% landsale_traj_patches(7,:)=[max(landsale_traj_175,[],1) min(landsale_traj_175,[],1) max(landsale_traj_175(:,1))];
+% 
+% figure
+% patch(patchx,landsale_traj_patches(7,:),'r')
+% hold on
+% patch(patchx,landsale_traj_patches(6,:),'y')
+% patch(patchx,landsale_traj_patches(5,:),'g')
+% patch(patchx,landsale_traj_patches(4,:),'k')
+% patch(patchx,landsale_traj_patches(3,:),'b')
+% patch(patchx,landsale_traj_patches(2,:),'c')
+% patch(patchx,landsale_traj_patches(1,:),'m')
+% 
+% 
+% 
+% 
+% 
+% 
+% plot(12:30,min(landsale_traj_025,[],1),'-m','LineWidth',1.5)
+% hold on
+% plot(12:30,max(landsale_traj_025,[],1),'-m','LineWidth',1.5)
+% plot(12:30,min(landsale_traj_050,[],1),'-c','LineWidth',1.5)
+% plot(12:30,max(landsale_traj_050,[],1),'-c','LineWidth',1.5)
+% plot(12:30,min(landsale_traj_075,[],1),'-b','LineWidth',1.5)
+% plot(12:30,max(landsale_traj_075,[],1),'-b','LineWidth',1.5)
+% plot(12:30,min(landsale_traj_100,[],1),'-k','LineWidth',1.5)
+% plot(12:30,max(landsale_traj_100,[],1),'-k','LineWidth',1.5)
+% plot(12:30,min(landsale_traj_125,[],1),'-g','LineWidth',1.5)
+% plot(12:30,max(landsale_traj_125,[],1),'-g','LineWidth',1.5)
+% plot(12:30,min(landsale_traj_150,[],1),'-y','LineWidth',1.5)
+% plot(12:30,max(landsale_traj_150,[],1),'-y','LineWidth',1.5)
+% plot(12:30,min(landsale_traj_175,[],1),'-r','LineWidth',1.5)
+% plot(12:30,max(landsale_traj_175,[],1),'-r','LineWidth',1.5)
+% legend('0.025','0.025','0.05','0.05','0.075','0.075','0.10','0.10','0.125',...
+%     '0.125','0.150','0.150','0.175','0.175','Location','northwest')
 %%
 runnamelabel={'MidAtl','NC','FL','TX'};
 tset=mat2cell(TSTART:TMAX,1,length(TSTART:TMAX));
@@ -523,10 +525,11 @@ difflabel={'Difference'};
 dscptlabel={'Descriptive Stats'};
 carrycostlabel={'Carrying Cost'};
 binlabel={'Bin Min. ($)'};
+landvaluelabel={'Initial Land Value Setting'};
 
 % %% Write time step file %%
-% cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\results\stormlcim_amenityslope
-% resultsfile=('Results_CHALMS_stormclim_amenityslope.xlsx');
+% cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\results\amenityslope_landvalues
+% resultsfile=('Results_CHALMS_amenityslope_landvalues.xlsx');
 % for j=1:EXPTRUNS
 %     xlswrite(resultsfile,timelabel,sprintf('Time Step Stats %s',runnamelabel{j}),'C1');
 %     xlswrite(resultsfile,tset{:},sprintf('Time Step Stats %s',runnamelabel{j}),'C2');
@@ -716,7 +719,7 @@ binlabel={'Bin Min. ($)'};
 % 
 %% Create figures and results
 
-cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\figs\stormclim_amenityslope
+cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\figs\coast_baseline
 
 % resultsfile='baseline_results_070314.txt';
 % save(resultsfile,'avgvac','avgpctdev','-ascii')

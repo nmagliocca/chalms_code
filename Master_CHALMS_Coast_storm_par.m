@@ -4,7 +4,7 @@
 clear
 tic
 
-EXPTRUNS=4*7;
+EXPTRUNS=3;
 MRUNS=30;
 % parpool(max(EXPTRUNS,12))
 stream=RandStream.create('mrg32k3a','Seed',13);
@@ -40,7 +40,7 @@ addAttachedFiles(poolobj,{'load_expmntlparms_storm.m','loadempdata.m',...
 
 
 %%
-for erun=26:EXPTRUNS
+for erun=1:EXPTRUNS
     
     %     rndstr.SubStream=erun;
     parfor mrun=1:MRUNS
@@ -573,12 +573,20 @@ for erun=26:EXPTRUNS
         iscape=(SCAPE==1);
         iscapelist=find(iscape==1);
         
-        coastdist=reshape(NWIDTH+1-cumsum(SCAPE,2),NCELLS,1);
+        
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%   Distance matrices   %%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         distfname='C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\data_files\DIST2CBD_east.mat';
         Sdist2cbd=load_DIST2CBD_east(distfname);
+        farmmapfname='C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\data_files\FARMMAP_grid.mat';
+        Sfarmmap=load_farmmap(farmmapfname);
+        
+        coastdist=reshape(NWIDTH+1-cumsum(SCAPE,2),NCELLS,1);
+%         for nf=1:Nfarmers
+%             ifarm=(Sfarmmap.AGLAYER==nf);
+%             coastdist(ifarm)=min(coastdist(ifarm));
+%         end
         %         load DIST2CBD_east
         
         % icenterrow=1;
@@ -968,8 +976,8 @@ for erun=26:EXPTRUNS
         
         % stream.Substream=35;
         rndstr.State=repeatstate{2,erun};
-        farmmapfname='C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\data_files\FARMMAP_grid.mat';
-        Sfarmmap=load_farmmap(farmmapfname);
+%         farmmapfname='C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\data_files\FARMMAP_grid.mat';
+%         Sfarmmap=load_farmmap(farmmapfname);
         %         load FARMMAP_grid
         
         
@@ -1560,8 +1568,7 @@ for erun=26:EXPTRUNS
         CONINFO(:,3)=num2cell(1-housepref);
         CONINFO(:,6)=num2cell((ampref_min(erun)+(ampref_max(erun)-ampref_min(erun))*...
             rand(length(housepref),1)).*housepref);
-        CONINFO(:,4)=num2cell(rand(length(housepref),1).*...
-            (housepref-cat(1,CONINFO{:,6}))/2);
+        CONINFO(:,4)=num2cell((housepref-cat(1,CONINFO{:,6})).*(0.1+(0.9-0.1)*rand(length(housepref),1)));
         CONINFO(:,5)=num2cell(housepref-(cat(1,CONINFO{:,4})+cat(1,CONINFO{:,6})));
         
         % CONINFO(:,4)=num2cell((0.1+(0.9-0.1)*rand(length(housepref),1)).*housepref);
@@ -3027,8 +3034,8 @@ for erun=26:EXPTRUNS
             
             CONINFO(inewpop,3)=num2cell(1-housepref(inewpop));
             CONINFO(inewpop,6)=num2cell((0.1+(0.9-0.1)*rand(length(housepref(inewpop)),1)).*housepref(inewpop));
-            CONINFO(inewpop,4)=num2cell(rand(length(housepref(inewpop)),1).*...)
-                (housepref(inewpop)-cat(1,CONINFO{inewpop,6}))/2);
+            CONINFO(inewpop,4)=num2cell((housepref(inewpop)-cat(1,CONINFO{inewpop,6})).*...
+                (0.1+(0.9-0.1)*rand(length(housepref(inewpop)),1)));
             CONINFO(inewpop,5)=num2cell(housepref(inewpop)-(cat(1,CONINFO{inewpop,4})+cat(1,CONINFO{inewpop,6})));
             %     CONINFO(inewpop,4)=num2cell((0.1+(0.9-0.1)*rand(length(housepref(inewpop)),1)).*housepref(inewpop));
             %     CONINFO(inewpop,5)=num2cell(rand(length(housepref(inewpop)),1).*...)
@@ -3817,7 +3824,7 @@ end
         
        
 %         ndate=datestr(date,'ddmmyy');
-        savefname=sprintf('stormclim_amenityslope%d_%d.mat',erun,mrun);
+        savefname=sprintf('coast_baseline%d_%d.mat',erun,mrun);
         parsave_storm(savefname,...
             consumerstats,vacstats,BUILDTIME,VACLAND,RENT,RETURN,LOTTYPE,...
             BASELAYER,Rpop,Rvacrate,Rvaclots,numlt,Rleftoverpop,avgrentdynms,...
