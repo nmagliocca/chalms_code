@@ -27,7 +27,7 @@ MRUNS=30;
 % number of experimental parameters
 NPARMS=1;
 % number of experimental variatons on NPARMS
-EXPTRUNS=3;
+EXPTRUNS=4;
 ERUNS=EXPTRUNS;
 % index numbers of storm climate settings and 1:MRUNS model runs
 batchind=[reshape(repmat(1:ERUNS,MRUNS,1),MRUNS*ERUNS,1) ...
@@ -54,7 +54,7 @@ branges=[40000:16000:184000 200001];    % income distribution bins
 
 %%% Adjust this %% 
 % navigate to results file storage
-cd X:\model_results\CHALMS_coast_032315
+cd X:\model_results\CHALMS_coast_033115
 fnames=dir;
 fnamescell=struct2cell(fnames);
 % (2) change the prefix of the results file names
@@ -63,7 +63,7 @@ hind=find(h==1);
 % add precalculated distance matrix
 cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\data_files
 load DIST2CBD_east
-cd X:\model_results\CHALMS_coast_032315
+cd X:\model_results\CHALMS_coast_033115
 distpt=ceil(min(min(dist2cbd)):max(max(dist2cbd)));
 density=zeros(NLENGTH*NWIDTH,length(hind));
 
@@ -452,10 +452,10 @@ save results_coast_baseline_batch_struct mapdata_store htdata_store aggdata_stor
 % legend('0.025','0.025','0.05','0.05','0.075','0.075','0.10','0.10','0.125',...
 %     '0.125','0.150','0.150','0.175','0.175','Location','northwest')
 %%
-runnamelabel={'MidAtl','NC','FL','TX'};
+runnamelabel={'AmSlope_075','AmSlope_100','AmSlope_125','AmSlope_050'};
 tset=mat2cell(TSTART:TMAX,1,length(TSTART:TMAX));
 cdistlabel=mat2cell(((coastdistpt.*cell2mile)-coastdistpt(1)*cell2mile)',1,8);
-cbddistlabel=mat2cell(cbddist(1,:),1,11);
+cbddistlabel=mat2cell(0.0395.*cbddist(1,:),1,11);
 rentlabel={'Avg Rents'};
 retlabel={'Avg Returns'};
 htutillabel={'Avg Utility'};
@@ -528,72 +528,72 @@ binlabel={'Bin Min. ($)'};
 landvaluelabel={'Initial Land Value Setting'};
 
 % %% Write time step file %%
-% cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\results\amenityslope_landvalues
-% resultsfile=('Results_CHALMS_amenityslope_landvalues.xlsx');
-% for j=1:EXPTRUNS
-%     xlswrite(resultsfile,timelabel,sprintf('Time Step Stats %s',runnamelabel{j}),'C1');
-%     xlswrite(resultsfile,tset{:},sprintf('Time Step Stats %s',runnamelabel{j}),'C2');
-%     xlswrite(resultsfile,lottypelabel,sprintf('Time Step Stats %s',runnamelabel{j}),'B2');
-%     xlswrite(resultsfile,lottypeset,sprintf('Time Step Stats %s',runnamelabel{j}),'B3');
-%     xlswrite(resultsfile,rentlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A3');
-%     rentdump=reshape(cell2mat(avgrentstats(batchruns{j})),HT,TMAX,MRUNS);
-%     xlswrite(resultsfile,mean(rentdump(:,TSTART:TMAX,:),3),sprintf('Time Step Stats %s',runnamelabel{j}),'C3');
-%     
-%     xlswrite(resultsfile,lotlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A12');
-%     xlswrite(resultsfile,lottypeset,sprintf('Time Step Stats %s',runnamelabel{j}),'B12');
-%     ltdump=reshape(cell2mat(numltrlts(:,batchruns{j})),HT,TMAX,MRUNS);
-%     xlswrite(resultsfile,mean(ltdump(:,TSTART:TMAX,:),3),sprintf('Time Step Stats %s',runnamelabel{j}),'C12');
-%     xlswrite(resultsfile,lotsumlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'B20');
-%     xlswrite(resultsfile,sum(mean(ltdump(:,TSTART:TMAX,:),3),1),sprintf('Time Step Stats %s',runnamelabel{j}),'C20');
-%     
-%     xlswrite(resultsfile,dscptlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A22');
-%     xlswrite(resultsfile,timelabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A23');
-%     xlswrite(resultsfile,tset{:},sprintf('Time Step Stats %s',runnamelabel{j}),'B23');
-%     xlswrite(resultsfile,devlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A24');
-%     xlswrite(resultsfile,mean(pctdev(batchruns{j},TSTART:TMAX),1),sprintf('Time Step Stats %s',runnamelabel{j}),'B24');
-%     xlswrite(resultsfile,vaclabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A25');
-%     xlswrite(resultsfile,avgvac(j,:),sprintf('Time Step Stats %s',runnamelabel{j}),'B25');
-%     xlswrite(resultsfile,incdistlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A27');
-%     xlswrite(resultsfile,binlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A28');
-%     xlswrite(resultsfile,branges',sprintf('Time Step Stats %s',runnamelabel{j}),'B28');
-%     xlswrite(resultsfile,incomedist(:,TSTART:TMAX,j),sprintf('Time Step Stats %s',runnamelabel{j}),'C28');
-% 
-%     xlswrite(resultsfile,plandstatslabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A39');
-%     xlswrite(resultsfile,plandtimelabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A40');
-%     xlswrite(resultsfile,tlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A41');
-%     xlswrite(resultsfile,meanlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A42');
-%     xlswrite(resultsfile,maxlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A43');
-%     xlswrite(resultsfile,minlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A44');
-%     xlswrite(resultsfile,sigmalabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A45');
-%     xlswrite(resultsfile,statlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A46');
-%     xlswrite(resultsfile,tset{:},sprintf('Time Step Stats %s',runnamelabel{j}),'B41');
-%     xlswrite(resultsfile,reshape(landsalerlts_time(TSTART:TMAX,j,:),length(TSTART:TMAX),7)',...
-%         sprintf('Time Step Stats %s',runnamelabel{j}),'B42');
-%     
-%     xlswrite(resultsfile,plandstatslabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A50');
-%     xlswrite(resultsfile,planddistclabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A51');
-%     xlswrite(resultsfile,dlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A52');
-%     xlswrite(resultsfile,meanlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A53');
-%     xlswrite(resultsfile,maxlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A54');
-%     xlswrite(resultsfile,minlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A55');
-%     xlswrite(resultsfile,sigmalabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A56');
-%     xlswrite(resultsfile,statlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A57');
-%     xlswrite(resultsfile,cdistlabel{:},sprintf('Time Step Stats %s',runnamelabel{j}),'B52');
-%     xlswrite(resultsfile,reshape(landsalerlts_coast(:,j,:),8,7)',...
-%         sprintf('Time Step Stats %s',runnamelabel{j}),'B53');
-%     
-%     xlswrite(resultsfile,plandstatslabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A61');
-%     xlswrite(resultsfile,planddistclabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A62');
-%     xlswrite(resultsfile,dlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A63');
-%     xlswrite(resultsfile,meanlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A64');
-%     xlswrite(resultsfile,maxlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A65');
-%     xlswrite(resultsfile,minlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A66');
-%     xlswrite(resultsfile,sigmalabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A67');
-%     xlswrite(resultsfile,statlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A68');
-%     xlswrite(resultsfile,cbddistlabel{:},sprintf('Time Step Stats %s',runnamelabel{j}),'B63');
-%     xlswrite(resultsfile,reshape(landsalerlts_cbd(:,j,:),11,7)',...
-%         sprintf('Time Step Stats %s',runnamelabel{j}),'B64');
-% end
+cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\results\coast_baseline_033115
+resultsfile=('Results_CHALMS_coast_baseline_033115.xlsx');
+for j=1:EXPTRUNS
+    xlswrite(resultsfile,timelabel,sprintf('Time Step Stats %s',runnamelabel{j}),'C1');
+    xlswrite(resultsfile,tset{:},sprintf('Time Step Stats %s',runnamelabel{j}),'C2');
+    xlswrite(resultsfile,lottypelabel,sprintf('Time Step Stats %s',runnamelabel{j}),'B2');
+    xlswrite(resultsfile,lottypeset,sprintf('Time Step Stats %s',runnamelabel{j}),'B3');
+    xlswrite(resultsfile,rentlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A3');
+    rentdump=reshape(cell2mat(avgrentstats(batchruns{j})),HT,TMAX,MRUNS);
+    xlswrite(resultsfile,mean(rentdump(:,TSTART:TMAX,:),3),sprintf('Time Step Stats %s',runnamelabel{j}),'C3');
+    
+    xlswrite(resultsfile,lotlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A12');
+    xlswrite(resultsfile,lottypeset,sprintf('Time Step Stats %s',runnamelabel{j}),'B12');
+    ltdump=reshape(cell2mat(numltrlts(:,batchruns{j})),HT,TMAX,MRUNS);
+    xlswrite(resultsfile,mean(ltdump(:,TSTART:TMAX,:),3),sprintf('Time Step Stats %s',runnamelabel{j}),'C12');
+    xlswrite(resultsfile,lotsumlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'B20');
+    xlswrite(resultsfile,sum(mean(ltdump(:,TSTART:TMAX,:),3),1),sprintf('Time Step Stats %s',runnamelabel{j}),'C20');
+    
+    xlswrite(resultsfile,dscptlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A22');
+    xlswrite(resultsfile,timelabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A23');
+    xlswrite(resultsfile,tset{:},sprintf('Time Step Stats %s',runnamelabel{j}),'B23');
+    xlswrite(resultsfile,devlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A24');
+    xlswrite(resultsfile,mean(pctdev(batchruns{j},TSTART:TMAX),1),sprintf('Time Step Stats %s',runnamelabel{j}),'B24');
+    xlswrite(resultsfile,vaclabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A25');
+    xlswrite(resultsfile,avgvac(j,:),sprintf('Time Step Stats %s',runnamelabel{j}),'B25');
+    xlswrite(resultsfile,incdistlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A27');
+    xlswrite(resultsfile,binlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A28');
+    xlswrite(resultsfile,branges',sprintf('Time Step Stats %s',runnamelabel{j}),'B28');
+    xlswrite(resultsfile,incomedist(:,TSTART:TMAX,j),sprintf('Time Step Stats %s',runnamelabel{j}),'C28');
+
+    xlswrite(resultsfile,plandstatslabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A39');
+    xlswrite(resultsfile,plandtimelabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A40');
+    xlswrite(resultsfile,tlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A41');
+    xlswrite(resultsfile,meanlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A42');
+    xlswrite(resultsfile,maxlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A43');
+    xlswrite(resultsfile,minlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A44');
+    xlswrite(resultsfile,sigmalabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A45');
+    xlswrite(resultsfile,statlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A46');
+    xlswrite(resultsfile,tset{:},sprintf('Time Step Stats %s',runnamelabel{j}),'B41');
+    xlswrite(resultsfile,reshape(landsalerlts_time(TSTART:TMAX,j,:),length(TSTART:TMAX),7)',...
+        sprintf('Time Step Stats %s',runnamelabel{j}),'B42');
+    
+    xlswrite(resultsfile,plandstatslabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A50');
+    xlswrite(resultsfile,planddistclabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A51');
+    xlswrite(resultsfile,dlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A52');
+    xlswrite(resultsfile,meanlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A53');
+    xlswrite(resultsfile,maxlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A54');
+    xlswrite(resultsfile,minlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A55');
+    xlswrite(resultsfile,sigmalabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A56');
+    xlswrite(resultsfile,statlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A57');
+    xlswrite(resultsfile,cdistlabel{:},sprintf('Time Step Stats %s',runnamelabel{j}),'B52');
+    xlswrite(resultsfile,reshape(landsalerlts_coast(:,j,:),8,7)',...
+        sprintf('Time Step Stats %s',runnamelabel{j}),'B53');
+    
+    xlswrite(resultsfile,plandstatslabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A61');
+    xlswrite(resultsfile,planddistlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A62');
+    xlswrite(resultsfile,dlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A63');
+    xlswrite(resultsfile,meanlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A64');
+    xlswrite(resultsfile,maxlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A65');
+    xlswrite(resultsfile,minlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A66');
+    xlswrite(resultsfile,sigmalabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A67');
+    xlswrite(resultsfile,statlabel,sprintf('Time Step Stats %s',runnamelabel{j}),'A68');
+    xlswrite(resultsfile,cbddistlabel{:},sprintf('Time Step Stats %s',runnamelabel{j}),'B63');
+    xlswrite(resultsfile,reshape(landsalerlts_cbd(:,j,:),11,7)',...
+        sprintf('Time Step Stats %s',runnamelabel{j}),'B64');
+end
 
 %% Single run comparisons
 % irun1=(batchind(:,2)==1);
@@ -719,7 +719,7 @@ landvaluelabel={'Initial Land Value Setting'};
 % 
 %% Create figures and results
 
-cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\figs\coast_baseline
+cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\figs\coast_baseline_033115
 
 % resultsfile='baseline_results_070314.txt';
 % save(resultsfile,'avgvac','avgpctdev','-ascii')

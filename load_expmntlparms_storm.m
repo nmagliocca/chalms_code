@@ -7,7 +7,7 @@ function [am0,am_slope,ampref_max,ampref_min,maxPflood,highrisk,stormfreq,maxdam
 % Coastal Amenity
 % am0=linspace(200000,800000,EXPTRUNS);
 am0=500000*ones(1,EXPTRUNS);        %baseline
-am_slope_parms=[0.075 0.1 0.125];
+am_slope_parms=[0.075 0.1 0.125 0.05];
 am_slope=repmat(am_slope_parms,1,1);
 % am_slope=repmat(reshape(repmat(am_slope_parms,MRUNS,1),MRUNS*...
 %     length(am_slope_parms),1),4,1);
