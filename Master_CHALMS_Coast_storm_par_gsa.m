@@ -4,8 +4,8 @@
 clear
 tic
 
-EXPTRUNS=1;
-MRUNS=30;
+EXPTRUNS=120;   %N
+MRUNS=9;    %k+2
 % parpool(max(EXPTRUNS,12))
 stream=RandStream.create('mrg32k3a','Seed',13);
 RandStream.setGlobalStream(stream);
@@ -34,19 +34,23 @@ poolobj=parpool(12);
 %     'HouseMarketDynamic_coast_batch.m','LandMarket_coast_base.m','parsave.m',...
 %     'FarmerModule_Coast_base.m','BrokersModule_Coast_0v3.m','distmat.m',...
 %     'dist2coast.mat','load_farmmap.m','load_DIST2CBD_east.m','load_distmat.m'});
-addAttachedFiles(poolobj,{'load_expmntlparms_storm.m','loadempdata.m',...
+addAttachedFiles(poolobj,{'load_expmntlparms_gsa_storm.m','loadempdata.m',...
     'parsave_storm.m','distmat.m','load_farmmap.m','load_DIST2CBD_east.m',...
     'load_distmat.m'});
 
-
 %%
-for erun=1:EXPTRUNS
-    
-    %     rndstr.SubStream=erun;
-    parfor mrun=1:MRUNS
-        %%
-        rndstr=RandStream.getGlobalStream;
+rstate1=cell2mat(repeatstate(1,:));
+rstate2=cell2mat(repeatstate(2,:));
+rstate3=cell2mat(repeatstate(3,:));
+firsteruns=EXPTRUNS/2;
+parfor erun=1:firsteruns
+    rndstr=RandStream.getGlobalStream;
         cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\base-chalms-code
+        
+%         rndstr.Substream=erun;
+        
+    for mrun=1:MRUNS
+        %%
         rndstr.Substream=mrun;
         
 %         disp([erun mrun])
@@ -54,7 +58,7 @@ for erun=1:EXPTRUNS
         % load experimental parameters file
         [am0,am_slope,ampref_max,ampref_min,maxPflood,highrisk,stormfreq,maxdam,...
             Cmit,miteff,AVGFARMRETURN,STDFARMRETURN,coastvalue,midvalue,...
-            inlandvalue,milecost,milestraveled]=load_expmntlparms_storm(EXPTRUNS);
+            inlandvalue,milecost,milestraveled,dscnt]=load_expmntlparms_gsa_storm(erun,MRUNS);
         %<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
         %     % M-files needed to run
         %     1. EmpDataInput_coast_base.m
@@ -81,7 +85,7 @@ for erun=1:EXPTRUNS
         %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
         %@@@@@@@@@@@@@@@@@@@@    INITIAL CONDITIONS    @@@@@@@@@@@@@@@@@@@@@@@@@@@@
         %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-        discount=0.05;
+        discount=dscnt(mrun);
         %         ccost_base=([201624.1197
         %             326624.1197
         %             208273.7676
@@ -153,7 +157,7 @@ for erun=1:EXPTRUNS
         celldiag=(cellside*sqrt(2));          %miles diag to neighboring cell's center
         acre2sqft=43560;
         avgdist2nei=mean([cellside celldiag]);
-        margtc=milecost(erun)*milestraveled(erun)*cell2mile;        %Assumed: 250 travel days a year, roundtrip
+        margtc=milecost(mrun)*milestraveled(mrun)*cell2mile;        %Assumed: 250 travel days a year, roundtrip
         %%% Zones Layer %%%
         NZONES=25;
         
@@ -618,7 +622,7 @@ for erun=1:EXPTRUNS
         travelcost(iscapelist)=num2cell(margtc*Sdist2cbd.dist2cbd(iscapelist));
         travelcost(icoast)=num2cell(10000*ones(length(icoast),1));
         % coastprox=num2cell(reshape(10*(max(max(coastdist))+1-coastdist),NCELLS,1));
-        coastprox=num2cell(am0(erun)*1./exp(am_slope(erun)*coastdist));
+        coastprox=num2cell(am0(mrun)*1./exp(am_slope(mrun)*coastdist));
         % coastprox=num2cell(reshape(0.1*(max(max(coastdist))+1-coastdist),NCELLS,1));
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -639,14 +643,15 @@ for erun=1:EXPTRUNS
         stormprob(3)=mat2cell(fl_storm,1,5);
         stormprob(4)=mat2cell(tx_storm,1,5);
         
-        Psevere=stormprob{stormfreq(erun)};
-%         Psevere=stormfreq(erun)*[0.013 0 0 0 0; 0.0065 0.0065 0 0 0; 0.013 0 0 0 0; 0.1364 0.0844 ...
+        Psevere=stormfreq(mrun)/100;
+%         Psevere=stormprob{stormfreq(mrun)};
+%         Psevere=stormfreq(mrun)*[0.013 0 0 0 0; 0.0065 0.0065 0 0 0; 0.013 0 0 0 0; 0.1364 0.0844 ...
 %             0.0714 0.0065 0; 0.0065 0 0 0 0; 0.0584 0.013 0.0065 0 0];
         
         % maxPflood=0.7;
         % highrisk=30;
-        risksurf=1./(1+exp((coastdist-highrisk(erun))/10));
-        Pflood=num2cell(reshape(maxPflood(erun)*(risksurf+(1-max(max(risksurf)))),NCELLS,1));
+        risksurf=1./(1+exp((coastdist-highrisk(mrun))/10));
+        Pflood=num2cell(reshape(maxPflood(mrun)*(risksurf+(1-max(max(risksurf)))),NCELLS,1));
         % Pflood=mat2cell([(1:NCELLS)' reshape(maxPflood*(risksurf+(1-...
         %     max(max(risksurf)))),NCELLS,1)],ones(NCELLS,1),2);
         TSI=num2cell(ones(NCELLS,1));
@@ -656,9 +661,9 @@ for erun=1:EXPTRUNS
 %         Pimpact=cat(1,Pflood{:})*mean(Psevere,1);
 
         % Percent damage with storm categories 1-5
-        housedam=maxdam(erun)*10.23749-0.23462*(coastdist*cell2ft/1000)+...
+        housedam=maxdam(mrun)*10.23749-0.23462*(coastdist*cell2ft/1000)+...
             0.001649*(coastdist*cell2ft/1000).^2;
-%         housedam=maxdam(erun)*[0.05 0.1 0.25 0.5 1];
+%         housedam=maxdam(mrun)*[0.05 0.1 0.25 0.5 1];
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   ZONES Layer    %%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -778,7 +783,8 @@ for erun=1:EXPTRUNS
         %%%%%%%%%%%%%%%%%%%%%%%%%%% Landscape Template %%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
         % stream.Substream=86;
-        rndstr.State=repeatstate{1,erun};
+%         rndstr.State=repeatstate{1,erun};
+        rndstr.State=rstate1(:,erun);
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%    Housing Layer    %%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -983,7 +989,8 @@ for erun=1:EXPTRUNS
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
         % stream.Substream=35;
-        rndstr.State=repeatstate{2,erun};
+%         rndstr.State=repeatstate{2,erun};
+        rndstr.State=rstate2(:,erun);
 %         farmmapfname='C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\data_files\FARMMAP_grid.mat';
 %         Sfarmmap=load_farmmap(farmmapfname);
         %         load FARMMAP_grid
@@ -1011,17 +1018,17 @@ for erun=1:EXPTRUNS
             farmprod=ones(length(farmacres),1)*FARMPROD;
             farmcost=ones(length(farmacres),1)*FARMCOST;
             if farmmindist < 0.3
-%                 farmret=ones(length(farmacres),1)*coastvalue(erun)*AVGFARMRETURN(erun)-...
+%                 farmret=ones(length(farmacres),1)*coastvalue(mrun)*AVGFARMRETURN(mrun)-...
 %                     cat(1,travelcost{farmacres});
-                farmret=ones(length(farmacres),1)*coastvalue(erun)*AVGFARMRETURN(erun);
+                farmret=ones(length(farmacres),1)*coastvalue(mrun)*AVGFARMRETURN(mrun);
             elseif farmmindist >=0.3 && farmmindist < 1
-%                 farmret=ones(length(farmacres),1)*midvalue(erun)*AVGFARMRETURN(erun)-...
+%                 farmret=ones(length(farmacres),1)*midvalue(mrun)*AVGFARMRETURN(mrun)-...
 %                     cat(1,travelcost{farmacres});
-                farmret=ones(length(farmacres),1)*midvalue(erun)*AVGFARMRETURN(erun);
+                farmret=ones(length(farmacres),1)*midvalue(mrun)*AVGFARMRETURN(mrun);
             elseif farmmindist >= 1
-%                 farmret=ones(length(farmacres),1)*inlandvalue(erun)*AVGFARMRETURN(erun)-...
+%                 farmret=ones(length(farmacres),1)*inlandvalue(mrun)*AVGFARMRETURN(mrun)-...
 %                     cat(1,travelcost{farmacres});
-                farmret=ones(length(farmacres),1)*inlandvalue(erun)*AVGFARMRETURN(erun);
+                farmret=ones(length(farmacres),1)*inlandvalue(mrun)*AVGFARMRETURN(mrun);
             end
             sublandvalue(farmacres)=farmret;
             subpland(farmacres)=farmret;
@@ -1334,7 +1341,8 @@ for erun=1:EXPTRUNS
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
         % stream.Substream=4;
-        rndstr.State=repeatstate{3,erun};
+%         rndstr.State=repeatstate{3,erun};
+        rndstr.State=rstate3(:,erun);
         %%%% Developer's Population Prediction Models %%%%%%%
         
         classagentmodel = ceil(POPNUMCLASS*rand(Ndevelopers,NUMMODEL));
@@ -1577,7 +1585,7 @@ for erun=1:EXPTRUNS
         housepref(income3)=LOWBETA(1)+(LOWBETA(2)-LOWBETA(1))*rand(length(find(income3==1)),1);
         
         CONINFO(:,3)=num2cell(1-housepref);
-        CONINFO(:,6)=num2cell((ampref_min(erun)+(ampref_max(erun)-ampref_min(erun))*...
+        CONINFO(:,6)=num2cell((ampref_min(mrun)+(ampref_max(mrun)-ampref_min(mrun))*...
             rand(length(housepref),1)).*housepref);
         CONINFO(:,4)=num2cell((housepref-cat(1,CONINFO{:,6})).*(0.1+(0.9-0.1)*rand(length(housepref),1)));
         CONINFO(:,5)=num2cell(housepref-(cat(1,CONINFO{:,4})+cat(1,CONINFO{:,6})));
@@ -3835,7 +3843,7 @@ end
         
        
 %         ndate=datestr(date,'ddmmyy');
-        savefname=sprintf('coast_baseline%d_%d.mat',erun,mrun);
+        savefname=sprintf('coast_baseline_gsa%d_%d.mat',erun,mrun);
         parsave_storm(savefname,...
             consumerstats,vacstats,BUILDTIME,VACLAND,RENT,RETURN,LOTTYPE,...
             BASELAYER,Rpop,Rvacrate,Rvaclots,numlt,Rleftoverpop,avgrentdynms,...

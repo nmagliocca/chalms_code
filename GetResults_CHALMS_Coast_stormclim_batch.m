@@ -23,11 +23,11 @@ z = 1000*[0.00025    1.5000
     0.0020    1.5000
     0.0020    2.5000];
 % number of model iterations
-MRUNS=30;
+MRUNS=9;
 % number of experimental parameters
 NPARMS=1;
 % number of experimental variatons on NPARMS
-EXPTRUNS=4;
+EXPTRUNS=120;
 ERUNS=EXPTRUNS;
 % index numbers of storm climate settings and 1:MRUNS model runs
 batchind=[reshape(repmat(1:ERUNS,MRUNS,1),MRUNS*ERUNS,1) ...
@@ -54,28 +54,31 @@ branges=[40000:16000:184000 200001];    % income distribution bins
 
 %%% Adjust this %% 
 % navigate to results file storage
-cd X:\model_results\CHALMS_coast_033115
+cd X:\model_results\CHALMS_coast_gsa_baseline
 fnames=dir;
 fnamescell=struct2cell(fnames);
 % (2) change the prefix of the results file names
-h=strncmp('coast_baseline',fnamescell(1,:),14);
+h=strncmp('coast_baseline_gsa',fnamescell(1,:),14);
 hind=find(h==1);
 % add precalculated distance matrix
 cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\data_files
 load DIST2CBD_east
-cd X:\model_results\CHALMS_coast_033115
+cd X:\model_results\CHALMS_coast_gsa_baseline
 distpt=ceil(min(min(dist2cbd)):max(max(dist2cbd)));
 density=zeros(NLENGTH*NWIDTH,length(hind));
 
 pctdev=zeros(length(hind),TMAX);
+pctdev_zone=zeros(length(hind),TMAX,5);
 htprob=cell(TMAX,length(hind));
 htentropy=zeros(length(hind),TMAX);
+htentropy_zone=zeros(length(hind),TMAX,5);
 
 htprob_cross=cell(TMAX,length(hind));
 htentropy_cross=zeros(length(hind),TMAX);
 
 LTmap=cell(TMAX,length(hind));
 avgrentstats=cell(1,length(hind));
+avgrentstats_zone=zeros(TMAX,length(hind),5);
 avgreturnstats=cell(1,length(hind));
 avgexptreturnstats=cell(1,length(hind));
 numltrlts=cell(TMAX,length(hind));
@@ -85,6 +88,7 @@ incomemap=zeros(NLENGTH*NWIDTH,length(hind));
 amprefmap=zeros(NLENGTH*NWIDTH,length(hind));
 housepricemap=zeros(NLENGTH*NWIDTH,length(hind));
 btmap=zeros(NLENGTH*NWIDTH,length(hind));
+bt_zone=zeros(length(hind),5);
 landsales=zeros(NLENGTH*NWIDTH,length(hind));
 landsaletime=zeros(NLENGTH*NWIDTH,length(hind));
 densitydata=zeros(NLENGTH*NWIDTH,length(hind));
@@ -395,7 +399,7 @@ for i=1:EXPTRUNS
 end
 land_sales=struct('landsales_time',{landsalerlts_time},'landsales_coast',...
     {landsalerlts_coast},'landsales_cbd',{landsalerlts_cbd},'landsales_all',{landsale_run});
-save results_coast_baseline_batch_struct mapdata_store htdata_store aggdata_store run_indices land_sales
+save results_coast_baseline_025_batch_struct mapdata_store htdata_store aggdata_store run_indices land_sales
 
 
 % %%% Plot land price trajectories
@@ -452,7 +456,7 @@ save results_coast_baseline_batch_struct mapdata_store htdata_store aggdata_stor
 % legend('0.025','0.025','0.05','0.05','0.075','0.075','0.10','0.10','0.125',...
 %     '0.125','0.150','0.150','0.175','0.175','Location','northwest')
 %%
-runnamelabel={'AmSlope_075','AmSlope_100','AmSlope_125','AmSlope_050'};
+runnamelabel={'AmSlope_025','AmSlope_075','AmSlope_100','AmSlope_125','AmSlope_050'};
 tset=mat2cell(TSTART:TMAX,1,length(TSTART:TMAX));
 cdistlabel=mat2cell(((coastdistpt.*cell2mile)-coastdistpt(1)*cell2mile)',1,8);
 cbddistlabel=mat2cell(0.0395.*cbddist(1,:),1,11);
@@ -528,8 +532,8 @@ binlabel={'Bin Min. ($)'};
 landvaluelabel={'Initial Land Value Setting'};
 
 % %% Write time step file %%
-cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\results\coast_baseline_033115
-resultsfile=('Results_CHALMS_coast_baseline_033115.xlsx');
+cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\results\coast_baseline_040815
+resultsfile=('Results_CHALMS_coast_baseline_040815.xlsx');
 for j=1:EXPTRUNS
     xlswrite(resultsfile,timelabel,sprintf('Time Step Stats %s',runnamelabel{j}),'C1');
     xlswrite(resultsfile,tset{:},sprintf('Time Step Stats %s',runnamelabel{j}),'C2');
@@ -719,7 +723,7 @@ end
 % 
 %% Create figures and results
 
-cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\figs\coast_baseline_033115
+cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\figs\coast_baseline_040815
 
 % resultsfile='baseline_results_070314.txt';
 % save(resultsfile,'avgvac','avgpctdev','-ascii')
@@ -769,7 +773,7 @@ for j=1:EXPTRUNS
 %     set(gca,'Visible','off')
     title('t=30');
     set(get(gca,'Title'),'Visible','on')
-    saveas(h1,sprintf('avg_housetypes_%d',j),'jpg')
+    saveas(h1,sprintf('avg_housetypes_%s',runnamelabel{j}),'jpg')
     
     
     % plot consumer incomes
@@ -803,7 +807,7 @@ for j=1:EXPTRUNS
     colorbar;
     title('Variance in Consumer Income');
     set(get(gca,'Title'),'Visible','on')
-    saveas(h2,sprintf('final_consumer_income_%d',j),'jpg')
+    saveas(h2,sprintf('final_consumer_income_%s',runnamelabel{j}),'jpg')
     
 %     figure(h2_1);
 %     orient tall
@@ -851,7 +855,7 @@ for j=1:EXPTRUNS
     colorbar;
     title('Variance in Build Time');
     set(get(gca,'Title'),'Visible','on')
-    saveas(h3,sprintf('build_time_%d',j),'jpg')
+    saveas(h3,sprintf('build_time_%s',runnamelabel{j}),'jpg')
     
     % plot entropy of housing type distribution
     h4=figure;
@@ -862,7 +866,7 @@ for j=1:EXPTRUNS
     legend('Mean Entropy','Individual Model Runs')
     xlabel('Time Step')
     ylabel('Entropy of Housing Type Distribution')
-    saveas(h4,sprintf('htentropy_%d',j),'jpg')
+    saveas(h4,sprintf('htentropy_%s',runnamelabel{j}),'jpg')
     % which lot types are leading to each of the trajectories?
     
     % plot land sales
@@ -894,7 +898,7 @@ for j=1:EXPTRUNS
     colorbar;
     title('Variance in Land Sales');
     set(get(gca,'Title'),'Visible','on')
-    saveas(h5,sprintf('landsales_%d',j),'jpg')
+    saveas(h5,sprintf('landsales_%s',runnamelabel{j}),'jpg')
     
     % plot consumer amenity preferences
     % isubdev=find(subdevmap ~= 0);
@@ -926,7 +930,7 @@ for j=1:EXPTRUNS
     colorbar;
     title('Variance in Consumer Amenity Preference');
     set(get(gca,'Title'),'Visible','on')
-    saveas(h6,sprintf('amprefmap_%d',j),'jpg')
+    saveas(h6,sprintf('amprefmap_%s',runnamelabel{j}),'jpg')
     
     % plot avg rents
     avgrents=reshape(cell2mat(avgrentstats),HT,TMAX,length(hind));
@@ -939,7 +943,7 @@ for j=1:EXPTRUNS
     xlabel('Time Step');
     ylabel('Rent');
     legend('HT1','HT2','HT3','HT4','HT5','HT6','HT7','HT8','Location','NorthWest');
-    saveas(h7,sprintf('avgrents_%d',j),'jpg')
+    saveas(h7,sprintf('avgrents_%s',runnamelabel{j}),'jpg')
 end
 
 % inc=cell(1,ERUNS);
