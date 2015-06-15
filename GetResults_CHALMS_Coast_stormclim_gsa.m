@@ -65,6 +65,8 @@ hind=find(h==1);
 cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\data_files
 load DIST2CBD_east
 cd X:\model_results\CHALMS_coast_gsa_baseline
+load gsaparms.mat
+
 distpt=ceil(min(min(dist2cbd)):max(max(dist2cbd)));
 density=zeros(NLENGTH*NWIDTH,length(hind));
 
@@ -125,8 +127,8 @@ for mr=1:length(hind)   % MRUNS*EXPTRUNS
         batchind(mr,2)),fnamescell(1,:));
     filename=fnamescell{1,h};
     load(filename)
-    
-    damagemap=0.01.*(X{mr,2}*10.23749-0.23462*(coastdist*cell2ft/1000)+...
+    damcoef=X{batchind(mr,1),2};
+    damagemap=0.01.*(damcoef(batchind(mr,2))*10.23749-0.23462*(coastdist*cell2ft/1000)+...
             0.001649*(coastdist*cell2ft/1000).^2);
     
     izone5=find(BUILDTIME == TSTART);
@@ -200,63 +202,106 @@ for mr=1:length(hind)   % MRUNS*EXPTRUNS
             if iz==1
                 zonemap(izone1)=LOTTYPE(izone1,it);
                 idevarea=(zonemap~=0);
-                islot=ismember(lotchoice(:,2),find(idevarea==1));
-                numltrlts_zone1(it,mr)=mat2cell(histc(zonemap(idevarea),1:HT),HT,1);
-                htentropy_zone(mr,it,iz)=-sum(((numltrlts_zone1{it,mr}.*z(:,1))./...
-                    sum(numltrlts_zone1{it,mr}.*z(:,1))).*log(((numltrlts_zone1{it,mr}.*z(:,1))./...
-                    sum(numltrlts_zone1{it,mr}.*z(:,1)))),1)./log(HT);
-                zsize=size(izone1);
-                pctdev_zone(mr,it,iz)=length(find(idevarea==1))/(zsize(1)*zsize(2));
+                if isempty(find(idevarea==1,1))==1
+                    numltrlts_zone1(it,mr)=mat2cell(zeros(HT,1),HT,1);
+                    htentropy_zone(mr,it,iz)=0;
+                    pctdev_zone(mr,it,iz)=0;
+                else
+                    islot=ismember(cat(1,lotchoice{:,2}),find(idevarea==1));
+                    numltrlts_zone1(it,mr)=mat2cell(reshape(histc(zonemap(idevarea),1:HT),HT,1),HT,1);
+                    htentropy_zone(mr,it,iz)=-sum(((numltrlts_zone1{it,mr}.*z(:,1))./...
+                        sum(numltrlts_zone1{it,mr}.*z(:,1))).*log(((numltrlts_zone1{it,mr}.*z(:,1))./...
+                        sum(numltrlts_zone1{it,mr}.*z(:,1)))),1)./log(HT);
+                    zsize=size(izone1);
+                    pctdev_zone(mr,it,iz)=length(find(idevarea==1))/(zsize(1)*zsize(2));
+                end
             elseif iz==2
                 zonemap(izone2)=LOTTYPE(izone2,it);
                 idevarea=(zonemap~=0);
-                islot=ismember(lotchoice(:,2),find(idevarea==1));
-                numltrlts_zone2(it,mr)=mat2cell(histc(zonemap(idevarea),1:HT),HT,1);
-                htentropy_zone(mr,it,iz)=-sum(((numltrlts_zone2{it,mr}.*z(:,1))./...
-                    sum(numltrlts_zone2{it,mr}.*z(:,1))).*log(((numltrlts_zone2{it,mr}.*z(:,1))./...
-                    sum(numltrlts_zone2{it,mr}.*z(:,1)))),1)./log(HT);
-                zsize=size(izone2);
-                pctdev_zone(mr,it,iz)=length(find(idevarea==1))/(zsize(1)*zsize(2));
+                if isempty(find(idevarea==1,1))==1
+                    numltrlts_zone1(it,mr)=mat2cell(zeros(HT,1),HT,1);
+                    htentropy_zone(mr,it,iz)=0;
+                    pctdev_zone(mr,it,iz)=0;
+                else
+                    islot=ismember(cat(1,lotchoice{:,2}),find(idevarea==1));
+                    numltrlts_zone2(it,mr)=mat2cell(reshape(histc(zonemap(idevarea),1:HT),HT,1),HT,1);
+                    htentropy_zone(mr,it,iz)=-sum(((numltrlts_zone2{it,mr}.*z(:,1))./...
+                        sum(numltrlts_zone2{it,mr}.*z(:,1))).*log(((numltrlts_zone2{it,mr}.*z(:,1))./...
+                        sum(numltrlts_zone2{it,mr}.*z(:,1)))),1)./log(HT);
+                    zsize=size(izone2);
+                    pctdev_zone(mr,it,iz)=length(find(idevarea==1))/(zsize(1)*zsize(2));
+                end
             elseif iz==3
                 zonemap(izone3)=LOTTYPE(izone3,it);
                 idevarea=(zonemap~=0);
-                islot=ismember(lotchoice(:,2),find(idevarea==1));
-                numltrlts_zone3(it,mr)=mat2cell(histc(zonemap(idevarea),1:HT),HT,1);
-                htentropy_zone(mr,it,iz)=-sum(((numltrlts_zone3{it,mr}.*z(:,1))./...
-                    sum(numltrlts_zone3{it,mr}.*z(:,1))).*log(((numltrlts_zone3{it,mr}.*z(:,1))./...
-                    sum(numltrlts_zone3{it,mr}.*z(:,1)))),1)./log(HT);
-                zsize=size(izone3);
-                pctdev_zone(mr,it,iz)=length(find(idevarea==1))/(zsize(1)*zsize(2));
+                if isempty(find(idevarea==1,1))==1
+                    numltrlts_zone1(it,mr)=mat2cell(zeros(HT,1),HT,1);
+                    htentropy_zone(mr,it,iz)=0;
+                    pctdev_zone(mr,it,iz)=0;
+                else
+                    islot=ismember(cat(1,lotchoice{:,2}),find(idevarea==1));
+                    numltrlts_zone3(it,mr)=mat2cell(reshape(histc(zonemap(idevarea),1:HT),HT,1),HT,1);
+                    htentropy_zone(mr,it,iz)=-sum(((numltrlts_zone3{it,mr}.*z(:,1))./...
+                        sum(numltrlts_zone3{it,mr}.*z(:,1))).*log(((numltrlts_zone3{it,mr}.*z(:,1))./...
+                        sum(numltrlts_zone3{it,mr}.*z(:,1)))),1)./log(HT);
+                    zsize=size(izone3);
+                    pctdev_zone(mr,it,iz)=length(find(idevarea==1))/(zsize(1)*zsize(2));
+                end
             elseif iz==4
                 zonemap(izone4)=LOTTYPE(izone4,it);
                 idevarea=(zonemap~=0);
-                islot=ismember(lotchoice(:,2),find(idevarea==1));
-                numltrlts_zone4(it,mr)=mat2cell(histc(zonemap(idevarea),1:HT),HT,1);
-                htentropy_zone(mr,it,iz)=-sum(((numltrlts_zone4{it,mr}.*z(:,1))./...
-                    sum(numltrlts_zone4{it,mr}.*z(:,1))).*log(((numltrlts_zone4{it,mr}.*z(:,1))./...
-                    sum(numltrlts_zone4{it,mr}.*z(:,1)))),1)./log(HT);
-                zsize=size(izone4);
-                pctdev_zone(mr,it,iz)=length(find(idevarea==1))/(zsize(1)*zsize(2));
+                if isempty(find(idevarea==1,1))==1
+                    numltrlts_zone1(it,mr)=mat2cell(zeros(HT,1),HT,1);
+                    htentropy_zone(mr,it,iz)=0;
+                    pctdev_zone(mr,it,iz)=0;
+                else
+                    islot=ismember(cat(1,lotchoice{:,2}),find(idevarea==1));
+                    numltrlts_zone4(it,mr)=mat2cell(reshape(histc(zonemap(idevarea),1:HT),HT,1),HT,1);
+                    htentropy_zone(mr,it,iz)=-sum(((numltrlts_zone4{it,mr}.*z(:,1))./...
+                        sum(numltrlts_zone4{it,mr}.*z(:,1))).*log(((numltrlts_zone4{it,mr}.*z(:,1))./...
+                        sum(numltrlts_zone4{it,mr}.*z(:,1)))),1)./log(HT);
+                    zsize=size(izone4);
+                    pctdev_zone(mr,it,iz)=length(find(idevarea==1))/(zsize(1)*zsize(2));
+                end
             elseif iz==5
                 zonemap(izone5)=LOTTYPE(izone5,it);
                 idevarea=(zonemap~=0);
-                islot=ismember(lotchoice(:,2),find(idevarea==1));
-                numltrlts_zone5(it,mr)=mat2cell(histc(zonemap(idevarea),1:HT),HT,1);
-                htentropy_zone(mr,it,iz)=-sum(((numltrlts_zone5{it,mr}.*z(:,1))./...
-                    sum(numltrlts_zone5{it,mr}.*z(:,1))).*log(((numltrlts_zone5{it,mr}.*z(:,1))./...
-                    sum(numltrlts_zone5{it,mr}.*z(:,1)))),1)./log(HT);
-                zsize=size(izone5);
-                pctdev_zone(mr,it,iz)=length(find(idevarea==1))/(zsize(1)*zsize(2));
+                if isempty(find(idevarea==1,1))==1
+                    numltrlts_zone1(it,mr)=mat2cell(zeros(HT,1),HT,1);
+                    htentropy_zone(mr,it,iz)=0;
+                    pctdev_zone(mr,it,iz)=0;
+                else
+                    islot=ismember(cat(1,lotchoice{:,2}),find(idevarea==1));
+                    numltrlts_zone5(it,mr)=mat2cell(reshape(histc(zonemap(idevarea),1:HT),HT,1),HT,1);
+                    htentropy_zone(mr,it,iz)=-sum(((numltrlts_zone5{it,mr}.*z(:,1))./...
+                        sum(numltrlts_zone5{it,mr}.*z(:,1))).*log(((numltrlts_zone5{it,mr}.*z(:,1))./...
+                        sum(numltrlts_zone5{it,mr}.*z(:,1)))),1)./log(HT);
+                    zsize=size(izone5);
+                    pctdev_zone(mr,it,iz)=length(find(idevarea==1))/(zsize(1)*zsize(2));
+                end
             end
-            densitydata_zone(mr,it,iz)=mean(z(LOTTYPE(idevarea,it),1));
-            idev=find(idevarea==1);
-            ilsale=ismember(idevarea,find(landsaletime(idevarea)==it));
-            landsales_zone(mr,it,iz)=mean(landsales(idevarea(ilsale),mr));
-            totdam_zone(mr,it,iz)=sum(RENT(idevarea,it).*damagemap(idevarea,it));
+            if isempty(find(idevarea==1,1))==1
+                densitydata(mr,it,iz)=0;
+                landsales_zone(mr,it,iz)=0;
+                totdam_zone(mr,it,iz)=0;
+            else
+                densitydata_zone(mr,it,iz)=mean(z(LOTTYPE(idevarea,it),1));
+                idev=find(idevarea==1);
+                ilsale=ismember(idevarea,find(landsaletime(idevarea)==it));
+                landsales_zone(mr,it,iz)=mean(landsales(idevarea(ilsale),mr));
+                totdam_zone(mr,it,iz)=sum(RENT(idev,it).*damagemap(idev));
+            end
         end
-        income_zone(mr,iz)=median(incomemap(idevarea,mr));
-        avgrentstats_zone(:,mr,iz)=mean(lotchoice(ismember(lotchoice(:,2),idevarea),7));
-        bt_zone(mr,iz)=mean(BUILDTIME(idevarea));
+        if isempty(find(idevarea==1,1))==1
+            income_zone(mr,iz)=0;
+            avgrentstats_zone(:,mr,iz)=0;
+            bt_zone(mr,iz)=0;
+        else
+            income_zone(mr,iz)=median(incomemap(idevarea,mr));
+            irents=find(ismember(cat(1,lotchoice{:,2}),find(idevarea==1))==1);
+            avgrentstats_zone(:,mr,iz)=mean(cat(2,lotchoice{irents,7}));
+            bt_zone(mr,iz)=mean(BUILDTIME(idevarea));
+        end
     end
     
     % build development proability map
@@ -284,5 +329,5 @@ save baseline_gsa_results avgrentstats avgrentstats_zone bt_zone btmap ...
     densitydata densitydata_zone htentropy htentropy_zone income_zone ...
     incomemap landsales landsales_zone numltrlts numltrlts_zone1 ...
     numltrlts_zone2 numltrlts_zone3 numltrlts_zone4 numltrlts_zone5 ...
-    pctdev pctdev_zone totdam totdam_zone vacrlts
+    pctdev pctdev_zone totdam totdam_zone vacrlts batchind
 

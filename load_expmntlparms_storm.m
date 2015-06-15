@@ -4,13 +4,10 @@
 function [am0,am_slope,ampref_max,ampref_min,maxPflood,highrisk,stormfreq,maxdam,...
     Cmit,miteff,AVGFARMRETURN,STDFARMRETURN,coastvalue,midvalue,...
     inlandvalue,milecost,milestraveled]=load_expmntlparms_storm(EXPTRUNS)
-
- cd X:\model_results\CHALMS_coast_gsa_baseline
- load gsa_samples.m
 % Coastal Amenity
 % am0=linspace(200000,800000,EXPTRUNS);
 am0=500000*ones(1,EXPTRUNS);        %baseline
-% am_slope_parms=[0.025 0.05 0.075 0.1 0.125];
+% am_slope_parms=[0.05 0.075 0.1 0.125 0.15];
 % am_slope=repmat(am_slope_parms,1,1);
 % am_slope=repmat(reshape(repmat(am_slope_parms,MRUNS,1),MRUNS*...
 %     length(am_slope_parms),1),4,1);
@@ -24,10 +21,11 @@ ampref_min=0.1*ones(1,EXPTRUNS);    %baseline
 maxPflood=0.7*ones(1,EXPTRUNS);     %baseline
 highrisk=30*ones(1,EXPTRUNS);       %baseline
 maxdam=ones(1,EXPTRUNS);            %baseline
-stormfreq=ones(1,EXPTRUNS);         %baseline
+stormfreq_parms=ones(1,EXPTRUNS);         %baseline
 % stormfreq_parms=[1 2 3 4];
 % stormfreq=reshape(repmat(stormfreq_parms,length(am_slope_parms),1),...
 %     length(am_slope_parms)*length(stormfreq_parms),1)';         
+stormfreq=stormfreq_parms;
 
 % stormthresh=15*ones(1,EXPTRUNS);
 % Cdam=0.5*ones(1,EXPTRUNS);

@@ -6,28 +6,8 @@ tic
 
 EXPTRUNS=1;
 MRUNS=30;
-% parpool(max(EXPTRUNS,12))
-stream=RandStream.create('mrg32k3a','Seed',13);
-RandStream.setGlobalStream(stream);
 
-% stream.Substream=86;
-% repeatstate1=stream.State;
-% stream.Substream=35;
-% repeatstate2=stream.State;
-% stream.Substream=4;
-% repeatstate3=stream.State;
-
-repeatstate=cell(3,EXPTRUNS);
-rsind=[86 35 4];
-for ic=1:EXPTRUNS
-    for ir=1:3
-        stream.Substream=rsind(ir);
-        repeatstate{ir,ic}=stream.State;
-    end
-end
-
-parmfit=zeros(MRUNS,7);
-
+rng default
 poolobj=parpool(12);
 % addAttachedFiles(poolobj,{'RefLandscape_Coast_batch.m','CHALMS_Coast_batch.m',...
 %     'load_expmntlparms.m','loadempdata.m','HouseMarketInitial_coast_batch.m',...
@@ -37,17 +17,20 @@ poolobj=parpool(12);
 addAttachedFiles(poolobj,{'load_expmntlparms_storm.m','loadempdata.m',...
     'parsave_storm.m','distmat.m','load_farmmap.m','load_DIST2CBD_east.m',...
     'load_distmat.m'});
-
-
+% 
+% rstate1=cell2mat(repeatstate(1,1));
+% rstate2=cell2mat(repeatstate(2,1));
+% rstate3=cell2mat(repeatstate(3,1));
 %%
 for erun=1:EXPTRUNS
     
     %     rndstr.SubStream=erun;
     parfor mrun=1:MRUNS
         %%
-        rndstr=RandStream.getGlobalStream;
+        rng(mrun)
+%         rndstr=RandStream.getGlobalStream;
         cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\base-chalms-code
-        rndstr.Substream=mrun;
+%         rndstr.Substream=mrun;
         
 %         disp([erun mrun])
         
@@ -556,7 +539,7 @@ for erun=1:EXPTRUNS
         Bmodelmap=zeros(NCELLS,TMAX);
         Bprojmap=zeros(NCELLS,TMAX);
         
-        savedState=rndstr.State;
+        savedState=rng;
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%    Load Reference Landscape    %%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -777,9 +760,8 @@ for erun=1:EXPTRUNS
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%% Landscape Template %%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
-        % stream.Substream=86;
-        rndstr.State=repeatstate{1,erun};
-        
+%         rndstr.State=repeatstate{1,erun};
+        rng(86);
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%    Housing Layer    %%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -981,9 +963,9 @@ for erun=1:EXPTRUNS
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%  Agricultural Layer   %%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        
-        % stream.Substream=35;
-        rndstr.State=repeatstate{2,erun};
+        rng(35);
+%         rndstr.State=repeatstate{2,erun};
+
 %         farmmapfname='C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\data_files\FARMMAP_grid.mat';
 %         Sfarmmap=load_farmmap(farmmapfname);
         %         load FARMMAP_grid
@@ -1332,9 +1314,9 @@ for erun=1:EXPTRUNS
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%    Developers    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        
-        % stream.Substream=4;
-        rndstr.State=repeatstate{3,erun};
+        rng(4);
+%         rndstr.State=repeatstate{3,erun};
+
         %%%% Developer's Population Prediction Models %%%%%%%
         
         classagentmodel = ceil(POPNUMCLASS*rand(Ndevelopers,NUMMODEL));
@@ -1557,7 +1539,8 @@ for erun=1:EXPTRUNS
         %%% CHALMS_Coast_batch
         %%% initial vacant land
         ivac=(VACLAND ~= 0);
-        
+%         rng(4);
+%         rndstr.State=repeatstate{3,erun};
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%    Consumers    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1580,6 +1563,8 @@ for erun=1:EXPTRUNS
         CONINFO(:,6)=num2cell((ampref_min(erun)+(ampref_max(erun)-ampref_min(erun))*...
             rand(length(housepref),1)).*housepref);
         CONINFO(:,4)=num2cell((housepref-cat(1,CONINFO{:,6})).*(0.1+(0.9-0.1)*rand(length(housepref),1)));
+%         CONINFO(:,4)=num2cell(rand(length(housepref),1).*...
+%             (housepref-cat(1,CONINFO{:,6}))/2);
         CONINFO(:,5)=num2cell(housepref-(cat(1,CONINFO{:,4})+cat(1,CONINFO{:,6})));
         
         % CONINFO(:,4)=num2cell((0.1+(0.9-0.1)*rand(length(housepref),1)).*housepref);
@@ -1594,7 +1579,7 @@ for erun=1:EXPTRUNS
             damcoef(:,tt)=mat2cell(ones(Nconstart,Nconstart),Nconstart,ones(Nconstart,1));
         end
         % stream.Substream=mrun;
-        rndstr.State=savedState;
+        rng(savedState);
         
         %%% Spin-up housing market, developer learns pricing
         rentmodelfname='C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\data_files\rentmodel.mat';
@@ -3047,6 +3032,8 @@ for erun=1:EXPTRUNS
             CONINFO(inewpop,6)=num2cell((0.1+(0.9-0.1)*rand(length(housepref(inewpop)),1)).*housepref(inewpop));
             CONINFO(inewpop,4)=num2cell((housepref(inewpop)-cat(1,CONINFO{inewpop,6})).*...
                 (0.1+(0.9-0.1)*rand(length(housepref(inewpop)),1)));
+%             CONINFO(inewpop,4)=num2cell(rand(length(housepref(inewpop)),1).*...)
+%                 (housepref(inewpop)-cat(1,CONINFO{inewpop,6}))/2);
             CONINFO(inewpop,5)=num2cell(housepref(inewpop)-(cat(1,CONINFO{inewpop,4})+cat(1,CONINFO{inewpop,6})));
             %     CONINFO(inewpop,4)=num2cell((0.1+(0.9-0.1)*rand(length(housepref(inewpop)),1)).*housepref(inewpop));
             %     CONINFO(inewpop,5)=num2cell(rand(length(housepref(inewpop)),1).*...)
@@ -3432,7 +3419,7 @@ end
                     vac_ccost(lt,t)=0;
                 else
                     vac_ccost(lt,t)=sum(discount*(cat(1,Lottype{istillvac(ilt),6})+...
-                        subplandinfo(cat(1,lotchoice{istillvac(ilt),2})).*...
+                        subplandinfo(cat(1,Lottype{istillvac(ilt),2})).*...
                         z(cat(1,Lottype{istillvac(ilt),5}),1)));
                 end
                 vac_rent(lt,t)=sum(Paskhouse(istillvac(ilt)));
@@ -3835,7 +3822,7 @@ end
         
        
 %         ndate=datestr(date,'ddmmyy');
-        savefname=sprintf('coast_baseline%d_%d.mat',erun,mrun);
+        savefname=sprintf('coast_amenityslope_025_%d.mat',mrun);
         parsave_storm(savefname,...
             consumerstats,vacstats,BUILDTIME,VACLAND,RENT,RETURN,LOTTYPE,...
             BASELAYER,Rpop,Rvacrate,Rvaclots,numlt,Rleftoverpop,avgrentdynms,...

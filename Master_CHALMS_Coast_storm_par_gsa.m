@@ -1959,7 +1959,7 @@ parfor erun=1:firsteruns
                 % projection
                 isnotvac=(iblots(:,3)==1);
                 if isempty(find(isnotvac,1))==1
-                    conintue
+                    continue
                 else
                     brkravgstats(ibr,:)=[median(cat(1,CONINFO{iblots(isnotvac,4),1})) ...
                         median(cat(1,CONINFO{iblots(isnotvac,4),3})) ...
