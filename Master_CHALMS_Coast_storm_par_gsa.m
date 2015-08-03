@@ -6,28 +6,8 @@ tic
 
 EXPTRUNS=120;   %N
 MRUNS=9;    %k+2
-% parpool(max(EXPTRUNS,12))
-stream=RandStream.create('mrg32k3a','Seed',13);
-RandStream.setGlobalStream(stream);
 
-% stream.Substream=86;
-% repeatstate1=stream.State;
-% stream.Substream=35;
-% repeatstate2=stream.State;
-% stream.Substream=4;
-% repeatstate3=stream.State;
-
-repeatstate=cell(3,EXPTRUNS);
-rsind=[86 35 4];
-for ic=1:EXPTRUNS
-    for ir=1:3
-        stream.Substream=rsind(ir);
-        repeatstate{ir,ic}=stream.State;
-    end
-end
-
-parmfit=zeros(MRUNS,7);
-
+rng default
 poolobj=parpool(12);
 % addAttachedFiles(poolobj,{'RefLandscape_Coast_batch.m','CHALMS_Coast_batch.m',...
 %     'load_expmntlparms.m','loadempdata.m','HouseMarketInitial_coast_batch.m',...
@@ -39,19 +19,20 @@ addAttachedFiles(poolobj,{'load_expmntlparms_gsa_storm.m','loadempdata.m',...
     'load_distmat.m'});
 
 %%
-rstate1=cell2mat(repeatstate(1,:));
-rstate2=cell2mat(repeatstate(2,:));
-rstate3=cell2mat(repeatstate(3,:));
+% rstate1=cell2mat(repeatstate(1,:));
+% rstate2=cell2mat(repeatstate(2,:));
+% rstate3=cell2mat(repeatstate(3,:));
 firsteruns=EXPTRUNS/2;
 parfor erun=1:firsteruns
-    rndstr=RandStream.getGlobalStream;
+    
+
         cd C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\base-chalms-code
         
 %         rndstr.Substream=erun;
         
     for mrun=1:MRUNS
         %%
-        rndstr.Substream=mrun;
+        rng(1);
         
 %         disp([erun mrun])
         
@@ -560,7 +541,7 @@ parfor erun=1:firsteruns
         Bmodelmap=zeros(NCELLS,TMAX);
         Bprojmap=zeros(NCELLS,TMAX);
         
-        savedState=rndstr.State;
+        savedState=rng;
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%    Load Reference Landscape    %%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -784,7 +765,7 @@ parfor erun=1:firsteruns
         
         % stream.Substream=86;
 %         rndstr.State=repeatstate{1,erun};
-        rndstr.State=rstate1(:,erun);
+        rng(86);
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%    Housing Layer    %%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -990,7 +971,7 @@ parfor erun=1:firsteruns
         
         % stream.Substream=35;
 %         rndstr.State=repeatstate{2,erun};
-        rndstr.State=rstate2(:,erun);
+        rng(35);
 %         farmmapfname='C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\data_files\FARMMAP_grid.mat';
 %         Sfarmmap=load_farmmap(farmmapfname);
         %         load FARMMAP_grid
@@ -1342,7 +1323,7 @@ parfor erun=1:firsteruns
         
         % stream.Substream=4;
 %         rndstr.State=repeatstate{3,erun};
-        rndstr.State=rstate3(:,erun);
+        rng(4);
         %%%% Developer's Population Prediction Models %%%%%%%
         
         classagentmodel = ceil(POPNUMCLASS*rand(Ndevelopers,NUMMODEL));
@@ -1602,7 +1583,7 @@ parfor erun=1:firsteruns
             damcoef(:,tt)=mat2cell(ones(Nconstart,Nconstart),Nconstart,ones(Nconstart,1));
         end
         % stream.Substream=mrun;
-        rndstr.State=savedState;
+        rng(savedState);
         
         %%% Spin-up housing market, developer learns pricing
         rentmodelfname='C:\Users\nmagliocca\Documents\Matlab_code\CHALMS_coast\data_files\rentmodel.mat';

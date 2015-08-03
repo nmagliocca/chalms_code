@@ -5,27 +5,27 @@ clear
 tic
 
 EXPTRUNS=1;
-MRUNS=30;
+MRUNS=1;
 
 rng default
-poolobj=parpool(12);
-% addAttachedFiles(poolobj,{'RefLandscape_Coast_batch.m','CHALMS_Coast_batch.m',...
-%     'load_expmntlparms.m','loadempdata.m','HouseMarketInitial_coast_batch.m',...
-%     'HouseMarketDynamic_coast_batch.m','LandMarket_coast_base.m','parsave.m',...
-%     'FarmerModule_Coast_base.m','BrokersModule_Coast_0v3.m','distmat.m',...
-%     'dist2coast.mat','load_farmmap.m','load_DIST2CBD_east.m','load_distmat.m'});
-addAttachedFiles(poolobj,{'load_expmntlparms_storm.m','loadempdata.m',...
-    'parsave_storm.m','distmat.m','load_farmmap.m','load_DIST2CBD_east.m',...
-    'load_distmat.m'});
-% 
-% rstate1=cell2mat(repeatstate(1,1));
-% rstate2=cell2mat(repeatstate(2,1));
-% rstate3=cell2mat(repeatstate(3,1));
+% poolobj=parpool(12);
+% % addAttachedFiles(poolobj,{'RefLandscape_Coast_batch.m','CHALMS_Coast_batch.m',...
+% %     'load_expmntlparms.m','loadempdata.m','HouseMarketInitial_coast_batch.m',...
+% %     'HouseMarketDynamic_coast_batch.m','LandMarket_coast_base.m','parsave.m',...
+% %     'FarmerModule_Coast_base.m','BrokersModule_Coast_0v3.m','distmat.m',...
+% %     'dist2coast.mat','load_farmmap.m','load_DIST2CBD_east.m','load_distmat.m'});
+% addAttachedFiles(poolobj,{'load_expmntlparms_storm.m','loadempdata.m',...
+%     'parsave_storm.m','distmat.m','load_farmmap.m','load_DIST2CBD_east.m',...
+%     'load_distmat.m'});
+
+% % rstate1=cell2mat(repeatstate(1,1));
+% % rstate2=cell2mat(repeatstate(2,1));
+% % rstate3=cell2mat(repeatstate(3,1));
 %%
 for erun=1:EXPTRUNS
     
     %     rndstr.SubStream=erun;
-    parfor mrun=1:MRUNS
+    for mrun=1:MRUNS
         %%
         rng(mrun)
 %         rndstr=RandStream.getGlobalStream;
@@ -194,6 +194,7 @@ for erun=1:EXPTRUNS
         incomeg=0.05;
         incomesigma=1;
         incomegrow=0.005;
+        mvcostpct=0.25;
         
         %%% Population %%%
         popg=0.05;
@@ -265,7 +266,7 @@ for erun=1:EXPTRUNS
         LOTS=zeros(NLENGTH,NWIDTH);
         
         %%% Broker Layer %%%
-        BROKER=cell(Nbrokers,4);
+        BROKER=cell(Nbrokers,2);
         HBROKER=zeros(NLENGTH,NWIDTH);
         UUcell=zeros(NLENGTH,NWIDTH);
         
@@ -400,11 +401,12 @@ for erun=1:EXPTRUNS
         
         %%% Consumers %
         avghousemp=zeros(1,TMAX);
-        % %CONINFO=[income,searchtime,consumer_good,housesize,lotsize,proximity,subrisk,occ/vac,utility]
-        CONINFO=cell(Nconstart,9);
+        % %CONINFO=[income,searchtime,consumer_good,housesize,lotsize,proximity,subrisk,occ/vac,utility(0),utility(t),movecosts]
+        CONINFO=cell(Nconstart,11);
         damcoef=cell(Nconstart,TMAX);   %coefficient that sets expected damages from storms for every lot
         searchtimemin=2;
         searchtimemax=6;
+        reloc_stats=cell(3,TMAX);   %[consumer_id, startpos, endpos]    
         
         %%% Population %%%
         POP=zeros(1,TMAX);
@@ -414,6 +416,7 @@ for erun=1:EXPTRUNS
         brokerlotinfo=cell(Nbrokers,7);  %[avg_price lotsize housesize #of_bidders %above_Pask #lots(lt) amlevel]
 %         AVGUTIL=cell([],1);
         brkravgstats=zeros(Nbrokers,5); %[avg_income avg_alpha avg_beta avg_gamma avg_ampref]
+        brkrbidlevel=zeros(HT,Nbrokers);
         houseinfo=zeros(HT,7,Nbrokers,TMAX);      %[avg_price lotsize housesize #of_bidders %above_Pask #lots(lt) amlevel]
         EXPTHOUSE=zeros(NCELLS,TMAX);
         MINBIDLEVEL=cell([],1);
@@ -756,6 +759,7 @@ for erun=1:EXPTRUNS
         minibmap=reshape(unique(HBROKER),nbrokerlong,nbrokerwide);
         for ib=1:Nbrokers
             BROKER{ib,1}=find(HBROKER==ib);
+            BROKER{ib,2}=ib*ones(length(find(HBROKER==ib)),1);
         end
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%% Landscape Template %%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -959,7 +963,7 @@ for erun=1:EXPTRUNS
         BIDLEVEL=num2cell(ones(Nlots(TSTART),1));
         AVGUTIL=num2cell(ones(Nlots(TSTART),1));
         BASELAYER(cat(1,Lottype{:,2}))=1;
-        
+        relocated=zeros(Nlots(TSTART),1);
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%  Agricultural Layer   %%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1546,6 +1550,7 @@ for erun=1:EXPTRUNS
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % Assign random income and houseing preferences to consumers
         housepref=zeros(Nconstart,1);
+%         movecost=zeros(Nconstart,1);
         subincome=round(exp(lognrnd(parmhat(1),parmhat(2),Nconstart,1)));
         % %CONINFO=[income,searchtime,consumer_good,housesize,lotsize,proximity,subrisk,occ/vac,utility]
         CONINFO(:,1)=num2cell(min(max(subincome,minwage),maxwage));
@@ -1558,6 +1563,8 @@ for erun=1:EXPTRUNS
         housepref(income1)=HIBETA(1)+(HIBETA(2)-HIBETA(1))*rand(length(find(income1==1)),1);
         housepref(income2)=MIDBETA(1)+(MIDBETA(2)-MIDBETA(1))*rand(length(find(income2==1)),1);
         housepref(income3)=LOWBETA(1)+(LOWBETA(2)-LOWBETA(1))*rand(length(find(income3==1)),1);
+        
+        CONINFO(:,11)=num2cell(cat(1,CONINFO{:,1}).*housepref.*mvcostpct);
         
         CONINFO(:,3)=num2cell(1-housepref);
         CONINFO(:,6)=num2cell((ampref_min(erun)+(ampref_max(erun)-ampref_min(erun))*...
@@ -1636,6 +1643,8 @@ for erun=1:EXPTRUNS
             exptCnomit=zeros(length(CONINFO(:,1)),Nlots(TSTART));
             mitchoice=zeros(length(CONINFO(:,1)),Nlots(TSTART));
             exptcost=zeros(2,Nlots(TSTART),length(CONINFO(:,1)));
+            lotchoice(:,4)=num2cell(zeros(Nlots(TSTART),1));
+            lotchoice(:,5)=num2cell(zeros(Nlots(TSTART),1));
             % %Lottype=[id,location index,lotsize,housesize,ltype,ccost,amlevel,travelcost,buildtime,brokerid]
             % %lotchoice=[id,location index,ltype,occ/vac,consumer id,residence time,sell price,mitchoice]
             % %CONINFO=[income,searchtime,consumer_good,housesize,lotsize,proximity,subrisk,occ/vac,utility]
@@ -1700,7 +1709,7 @@ for erun=1:EXPTRUNS
             for nl=1:Nlots(TSTART)
                 notherbuyers(nhouselook(:,nl),nl)=find(nhouselook(:,nl)==1);
             end
-            
+%             nbuyers=sum(nhouselook,1);
             for c=1:length(CONINFO(:,1))
                 if isempty(find(nhouselook(c,:),1))==1
                     continue
@@ -1787,11 +1796,13 @@ for erun=1:EXPTRUNS
                     conid=conset(cs);
                     CONINFO{conid,8}=1;
                     CONINFO{conid,9}=uset(ilotid(ipick));
+                    CONINFO{conid,10}=uset(ilotid(ipick));
                     %        CONINFO{conid,9}=uset(conid,lotid);
                     lotchoice{lotid,4}=1;
                     lotchoice{lotid,5}=conid;
-                    lotchoice{lotid,6}=max(ceil(TSTART+avgrestime/2+normrnd(avgrestime/...
-                        2,stdrestime/2,1,1)),TSTART+1);
+%                     lotchoice{lotid,6}=max(ceil(TSTART+avgrestime/2+normrnd(avgrestime/...
+%                         2,stdrestime/2,1,1)),TSTART+1);
+                    lotchoice{lotid,6}=TMAX+1;
                     lotchoice{lotid,7}=subPhousebid(conid,lotid);
                     %        lotchoice{lotid,8}=mitchoice(conid,lotid);
                     lotchoice{lotid,8}=1;
@@ -1936,7 +1947,7 @@ for erun=1:EXPTRUNS
                 % projection
                 isnotvac=(iblots(:,3)==1);
                 if isempty(find(isnotvac,1))==1
-                    conintue
+                    continue
                 else
                     brkravgstats(ibr,:)=[median(cat(1,CONINFO{iblots(isnotvac,4),1})) ...
                         median(cat(1,CONINFO{iblots(isnotvac,4),3})) ...
@@ -1949,6 +1960,10 @@ for erun=1:EXPTRUNS
                     (cat(1,Lottype{brokerind(isnotvac),6})+...
                     discount*subplandinfo(cat(1,lotchoice{brokerind(isnotvac),2})).*...
                     cat(1,Lottype{brokerind(isnotvac),3})));
+                for ht=1:HT
+                    bidlevels=cat(1,BIDLEVEL{brokerind});
+                    brkrbidlevel(ht,ibr)=mean(bidlevels(iblots(:,2)==ht));
+                end
                 sampleinfo=zeros(length(brokerind),6);
                 sampleinfo(:,1)=cat(1,lotchoice{brokerind,7});
                 sampleinfo(:,2)=cat(1,lotchoice{brokerind,3});
@@ -2129,7 +2144,7 @@ for erun=1:EXPTRUNS
             %Existing houses back on market <><><><><><><><><><><><><>
             ileave=find(cat(1,lotchoice{:,6})==t);
             if isempty(find(ileave,1))==0
-                returncon=(cat(1,lotchoice{ileave,4})==1);
+                returncon=(cat(1,lotchoice{ileave,4})==1 & cat(1,lotchoice{ileave,5})~=0);
                 CONINFO(cat(1,lotchoice{ileave(returncon),5}),2)=num2cell(t+ceil(searchtimemin+...
                     (searchtimemax-searchtimemin)*rand(length(ileave(returncon)),1)));
                 lotchoice(ileave,4)=num2cell(zeros(length(ileave),1));
@@ -2325,23 +2340,26 @@ for erun=1:EXPTRUNS
             reg_ampref=mean(cat(1,CONINFO{cat(1,lotchoice{isimlots,5}),6}));
             
             %Hedonic housing price estimation
-            %     B=mvregress([ones(length(ifilled),1) cat(1,Lottype{ifilled,3}) ...
-            %         cat(1,Lottype{ifilled,8}) cat(1,Lottype{ifilled,7})],...
-            %         cat(1,lotchoice{ifilled,7}));
-            %     rentmdl=fitlm([cat(1,Lottype{ifilled,3}) cat(1,Lottype{ifilled,4})...
-            %         cat(1,Lottype{ifilled,8}) cat(1,Lottype{ifilled,7}) ...
-            %         cat(1,CONINFO{cat(1,lotchoice{ifilled,5}),1})],...
-            %         cat(1,lotchoice{ifilled,7}));
+%             rentmdl=fitlm([cat(1,Lottype{ifilled,3}) cat(1,Lottype{ifilled,8})...
+%                 cat(1,Lottype{ifilled,7}) cat(1,CONINFO{cat(1,lotchoice{ifilled,5}),1})],...
+%                 cat(1,lotchoice{ifilled,7}));
             rentmdl=fitlm([cat(1,Lottype{ifilled,3}) cat(1,Lottype{ifilled,8})...
                 cat(1,Lottype{ifilled,7}) cat(1,CONINFO{cat(1,lotchoice{ifilled,5}),1})],...
-                cat(1,lotchoice{ifilled,7}));
+                cat(1,BIDLEVEL{ifilled}).*cat(1,lotchoice{ifilled,7}));
+            
+%             rentmdl=fitlm([cat(1,Lottype{ifilled,3}) cat(1,Lottype{ifilled,8})...
+%                 cat(1,Lottype{ifilled,7}) cat(1,CONINFO{cat(1,lotchoice{ifilled,5}),1}) ...
+%                 cat(1,BIDLEVEL{ifilled})],cat(1,lotchoice{ifilled,7}));
             
             ddist2hznnei=zeros(NLENGTH,NWIDTH);    %distance to horizontal neighbor from icenter
             ddist2vrtnei=zeros(NLENGTH,NWIDTH);
             potentialbuy=find(BASELAYER==0 & reshape(SCAPE,NCELLS,1) == 1);
+            brkrind=cat(1,BROKER{:,1});
+            brkrid=cat(1,BROKER{:,2});
             for tl=1:length(potentialbuy)
                 %%% Distance calc needs to be revised when applied to irregular grid
                 [vacrow,vaccol]=ind2sub([NLENGTH NWIDTH],potentialbuy(tl));
+                ifindbrkr=ismember(brkrind,potentialbuy(tl));
                 % pre-loaded distance matrix
                 inddist2dev=Sdist.distmat{potentialbuy(tl)};
                 
@@ -2508,7 +2526,9 @@ for erun=1:EXPTRUNS
                 ifarmcalc=find(LANDINFO{1,t}==iNfarmers(rf));
                 subWTPMAP=WTPMAP(:,t);
                 MAXEUMAP=MAXRET(:,t);
-                wtpland(iNfarmers(rf),t)=sum(subWTPMAP(ifarmcalc))/length(ifarmcalc);
+                iposwtp=~isnan(subWTPMAP(ifarmcalc));
+%                 wtpland(iNfarmers(rf),t)=sum(subWTPMAP(ifarmcalc))/length(ifarmcalc);
+                wtpland(iNfarmers(rf),t)=sum(subWTPMAP(ifarmcalc(iposwtp)))/length(ifarmcalc);
             end
             
             %%% LandMarket_coast_base
@@ -2631,12 +2651,12 @@ for erun=1:EXPTRUNS
             indvac=find(ivac==1);
             vcells=zeros([],4);
             subplandinfo=cat(2,LANDINFO{3,t});
-            for tl=1:length(indvac)
+            for tll=1:length(indvac)
                 subrentEU=zeros([],1);
-                subRENTPROJ=RENTPROJ{indvac(tl),t};
-                EUlandret(indvac(tl),:)=(subRENTPROJ-((subplandinfo(indvac(tl)).*z(:,1).*...
+                subRENTPROJ=RENTPROJ{indvac(tll),t};
+                EUlandret(indvac(tll),:)=(subRENTPROJ-((subplandinfo(indvac(tll)).*z(:,1).*...
                     discount)+ccost))./z(:,1);
-                EUrankret(indvac(tl),:)=EUlandret(indvac(tl),EUIND(:,indvac(tl)));
+                EUrankret(indvac(tll),:)=EUlandret(indvac(tll),EUIND(:,indvac(tll)));
             end
             subreturn=cat(2,RETURN{:,t});
             subpland=LANDINFO{3,t};
@@ -2877,10 +2897,10 @@ for erun=1:EXPTRUNS
                     tdist2hznnei=10000*ones(NLENGTH,NWIDTH);    %distance to horizontal neighbor from icenter
                     tdist2vrtnei=10000*ones(NLENGTH,NWIDTH);
                     transland=Farminfo{ifarmtrans(nt),2};
-                    for tl=1:length(transland(:,1))
+                    for tld=1:length(transland(:,1))
                         % Will need to be changed when using irregular sptial
                         % extent !!!
-                        [itlrow,itlcol]=ind2sub([NLENGTH,NWIDTH],transland(tl,1));
+                        [itlrow,itlcol]=ind2sub([NLENGTH,NWIDTH],transland(tld,1));
                         for col=1:NWIDTH
                             tdist2hznnei(1:NLENGTH,col)=min(abs(col-itlcol).*...
                                 ones(NLENGTH,1),tdist2hznnei(1:NLENGTH,col));
@@ -3010,6 +3030,9 @@ for erun=1:EXPTRUNS
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %%%%%%%%%%%%%%%%%%%%%%%    Consumers' Choices    %%%%%%%%%%%%%%%%%%%%%%%%%%
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            
+            
+            
             %%%%%%%%% Add new consumers %%%%%%%%%%
             newpop=ceil(length(CONINFO(:,1))*POPGROW);
             inewpop=length(CONINFO(:,1))+1:length(CONINFO(:,1))+newpop;
@@ -3028,6 +3051,10 @@ for erun=1:EXPTRUNS
             housepref(inewpop(newincome2),1)=MIDBETA(1)+(MIDBETA(2)-MIDBETA(1))*rand(length(find(newincome2==1)),1);
             housepref(inewpop(newincome3),1)=LOWBETA(1)+(LOWBETA(2)-LOWBETA(1))*rand(length(find(newincome3==1)),1);
             
+            CONINFO(inewpop,11)=num2cell(cat(1,CONINFO{inewpop,1}).*housepref(inewpop).*mvcostpct);
+            % assign moving costs as fixed portion of income devoted to
+            % housing
+            
             CONINFO(inewpop,3)=num2cell(1-housepref(inewpop));
             CONINFO(inewpop,6)=num2cell((0.1+(0.9-0.1)*rand(length(housepref(inewpop)),1)).*housepref(inewpop));
             CONINFO(inewpop,4)=num2cell((housepref(inewpop)-cat(1,CONINFO{inewpop,6})).*...
@@ -3042,6 +3069,7 @@ for erun=1:EXPTRUNS
             CONINFO(inewpop,7)=num2cell(ones(newpop,1));
             CONINFO(inewpop,8)=num2cell(zeros(newpop,1));
             CONINFO(inewpop,9)=num2cell(zeros(newpop,1));
+            CONINFO(inewpop,10)=num2cell(zeros(newpop,1));
             damcoef(inewpop,t)=mat2cell(ones(length(Lottype(:,1)),newpop),length(Lottype(:,1)),ones(newpop,1));
             
             %%%%%%%%%%%%%
@@ -3050,7 +3078,6 @@ for erun=1:EXPTRUNS
             vachouse=find(cat(1,lotchoice{:,4})==0);
             moveouts=find(cat(1,lotchoice{:,6})==t);
             inewlots=unique([vachouse; moveouts]);
-            inewcon=find(cat(1,CONINFO{:,8})==0);
             for il=1:length(inewlots)
                 if Lottype{inewlots(il),9} < t
                     continue
@@ -3063,6 +3090,29 @@ for erun=1:EXPTRUNS
                     [ones(length(brokerassign),1)*inewlots(il) brokerassign];
             end
             
+            % check existing consumer utility 'stress'
+            utilstress_chk=zeros(length(CONINFO(:,1)),1);
+            incstress_chk=zeros(length(CONINFO(:,1)),1);
+            iocc=find(cat(1,CONINFO{:,8})==1);
+            for c=1:length(iocc)
+                ilot=find(cat(1,lotchoice{:,5})==iocc(c));
+%                 brokerind=unique(brkrlocate(cat(1,Lottype{:,10})==Lottype{ilot,10},1));
+                brokerind=unique(brkrlocate(ismember(cat(1,Lottype{:,10}),cat(1,Lottype{ilot,10})),1));
+                isnotvac=(cat(1,lotchoice{brokerind,4})==1);
+                % neighborhood income
+                incstress_chk(iocc(c))=(CONINFO{iocc(c),1} > ...
+                    mean(cat(1,CONINFO{cat(1,lotchoice{brokerind(isnotvac),5}),1}))*1.5);
+                utilstress_chk(iocc(c))=(CONINFO{iocc(c),9}*1.15 < CONINFO{iocc(c),10});
+%                 utilstress_chk(iocc(c))=(CONINFO{iocc(c),9} < ...
+%                     mean(cat(1,CONINFO{cat(1,lotchoice{brokerind(isnotvac),5}),9}))*0.85);
+            end
+            conreloc=find(incstress_chk ==1 |utilstress_chk==1);
+            inewcon=[find(cat(1,CONINFO{:,8})==0); conreloc];
+            
+            reloc_stats(1,t)=mat2cell(conreloc,length(conreloc),1);
+            reloc_stats(2,t)=mat2cell(cat(1,lotchoice{ismember(cat(1,lotchoice{:,5}),...
+                conreloc),2}),length(conreloc),1);
+            
             bt=cat(1,Lottype{inewlots,9});
             Paskhouse(inewlots(bt < t))=cat(1,lotchoice{inewlots(bt < t),7});
             if isempty(find(bt == t,1)) == 0
@@ -3074,7 +3124,8 @@ for erun=1:EXPTRUNS
             BIDLEVEL(inewlots(bt ==t))=num2cell(zeros(length(inewlots(bt == t)),1));
             AVGUTIL(inewlots(bt ==t))=num2cell(zeros(length(inewlots(bt == t)),1));
             lotchoice(inewlots,7)=num2cell(Paskhouse(inewlots));
-            
+            relocated(inewlots(~ismember(inewlots,1:length(relocated))))=...
+                zeros(length(inewlots(~ismember(inewlots,1:length(relocated)))),1);
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %%%%%%%%%%%%%%%%%%%%%   House Market   %%%%%%%%%%%%%%%%%%%%%%%%
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -3156,6 +3207,25 @@ for erun=1:EXPTRUNS
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %     ihousein=(cat(1,BIDLEVEL{inewlots}).*Paskhouse(inewlots) < wtpcon(inewcon(c),inewlots)' & ...
                 %         U(inewcon(c),inewlots)' > CONINFO{inewcon(c),3}*max(U(inewcon(c),inewlots)));
+                
+                if CONINFO{inewcon(c),8}==1
+                    mvcost_util=U(inewcon(c),inewlots)'-(sum(Psevere)*...
+                    (((CONINFO{inewcon(c),1}-cat(1,travelcost{cat(1,lotchoice{inewlots,2})})-...
+                    Paskhouse(inewlots)-cat(1,Cdam{inewlots,t})-ones(length(inewlots),1).*CONINFO{inewcon(c),11}).^...
+                    CONINFO{inewcon(c),3}).*(cat(1,Lottype{inewlots,4}).^...
+                    CONINFO{inewcon(c),4}).*(cat(1,Lottype{inewlots,3}).^CONINFO{inewcon(c),5}).*...
+                    (cat(1,Lottype{inewlots,7}).^CONINFO{inewcon(c),6}))+...
+                    (1-sum(Psevere))*...
+                    (((CONINFO{inewcon(c),1}-cat(1,travelcost{cat(1,lotchoice{inewlots,2})})-...
+                    Paskhouse(inewlots)-ones(length(inewlots),1).*CONINFO{inewcon(c),11}).^...
+                    CONINFO{inewcon(c),3}).*(cat(1,Lottype{inewlots,4}).^...
+                    CONINFO{inewcon(c),4}).*(cat(1,Lottype{inewlots,3}).^CONINFO{inewcon(c),5}).*...
+                    (cat(1,Lottype{inewlots,7}).^CONINFO{inewcon(c),6})));
+                
+                    iresist_chk=(U(inewcon(c),inewlots)' > CONINFO{inewcon(c),9}+mvcost_util);
+                    wtpcon(inewcon(c),inewlots(iresist_chk))=0;
+                end
+
                 ihousein=cat(1,BIDLEVEL{inewlots}).*Paskhouse(inewlots) < wtpcon(inewcon(c),inewlots)';
                 ihouseout=find(inewlots(ihousein) == 0);
                 
@@ -3188,10 +3258,10 @@ for erun=1:EXPTRUNS
                     continue
                 else
                     nhouses=length(find(nhouselook(inewcon(c),inewlots)==1));
-                    subbuyers=unique(notherbuyers(:,nhouselook(inewcon(c),inewlots)));
+                    subbuyers=unique(notherbuyers(:,nhouselook(inewcon(c),:)));
                     subbuyers=subbuyers(subbuyers~=0);
                     nbuyers=length(subbuyers);
-                    housemp(inewcon(c))=(nbuyers-nhouses)/(nbuyers+nhouses);
+                    housemp(inewcon(c))=0.5*(nbuyers-nhouses)/(nbuyers+nhouses);
                     
                     if housemp(inewcon(c)) >= 0
                         Phousebid(inewcon(c),nhouselook(inewcon(c),:))=min(max(Rn(inewcon(c),...
@@ -3288,13 +3358,22 @@ for erun=1:EXPTRUNS
                     end
                     
                     conid=conset(cs);
+                    if CONINFO{conid,8}==1
+                        icurrentlot=find(cat(1,lotchoice{:,5})==conid);
+                        lotchoice{icurrentlot,4}=0;
+                        lotchoice{icurrentlot,5}=0;
+                        lotchoice{icurrentlot,6}=t+1;
+                        relocated(icurrentlot)=t;
+                    end
                     CONINFO{conid,8}=1;
                     CONINFO{conid,9}=uset(ilotid(ipick));
+                    CONINFO{conid,10}=uset(ilotid(ipick));
                     %         CONINFO{conid,9}=uset(conid,lotid);
                     lotchoice{lotid,4}=1;
                     lotchoice{lotid,5}=conid;
-                    lotchoice{lotid,6}=max(ceil(t+avgrestime/2+normrnd(avgrestime/...
-                        2,stdrestime/2,1,1)),t+1);
+%                     lotchoice{lotid,6}=max(ceil(t+avgrestime/2+normrnd(avgrestime/...
+%                         2,stdrestime/2,1,1)),t+1);
+                    lotchoice{lotid,6}=TMAX+1;
                     lotchoice{lotid,7}=subPhousebid(conid,lotid);
                     %         lotchoice{lotid,8}=mitchoice(conid,lotid);
                     lotchoice{lotid,8}=1;
@@ -3309,53 +3388,64 @@ for erun=1:EXPTRUNS
             end
             % VACANT HOUSES
             conlist=(1:length(CONINFO(:,1)))';
-            ifilled=find(cat(1,lotchoice{:,4})==1);
+%             ifilled=find(cat(1,lotchoice{:,4})==1);
+%             istillvac=find(cat(1,lotchoice{:,4})==0);
+            ifilled=find(cat(1,lotchoice{:,5})~=0);
             istillvac=find(cat(1,lotchoice{:,4})==0);
             popin=cat(1,lotchoice{ifilled,5});
             popout=conlist(~ismember(conlist,popin));
             lotchoice(istillvac,6)=num2cell(ones(length(istillvac),1)*t+1);
             lotchoice(istillvac,8)=num2cell(zeros(length(istillvac),1));
             
+            reloc_stats(3,t)=mat2cell(cat(1,lotchoice{ismember(cat(1,lotchoice{:,5}),...
+                conreloc),2}),length(conreloc),1);
+            
             % %Lottype=[id,location index,lotsize,housesize,ltype,ccost,amlevel,travelcost,buildtime,brokerid]
             % %lotchoice=[id,location index,ltype,occ/vac,consumer id,residence time,sell price,mitchoice]
             % %CONINFO=[income,searchtime,consumer_good,housesize,lotsize,proximity,subrisk,occ/vac,utility]
-for sv=1:length(istillvac)
-   if Lottype{istillvac(sv),9} == t 
-       lotchoice{istillvac(sv),7}=Paskhouse(istillvac(sv))./(1+discount);
-   elseif Lottype{istillvac(sv),9} < t
-       lotchoice{istillvac(sv),7}=max(Paskhouse(istillvac(sv))-...
-           discount*Lottype{istillvac(sv),6}*(t-Lottype{istillvac(sv),9}),0);
-   end
-end
-
-for kk=1:length(Lottype(:,1))
-    RENT(cat(1,Lottype{kk,2}),t)=ones(length(Lottype{kk,2}),1)*cat(1,lotchoice{kk,7});
-%    isamecell=ismember(Lottype(:,2),cellinfo(kk,2));
-%    if length(find(isamecell==1)) > 1
-%        RENT(cellinfo(kk,2))=mean(con2lot(Lottype(isamecell,1),1));
-%    elseif length(find(isamecell==1)) == 1
-%        RENT(cellinfo(kk,2))=con2lot(cellinfo(kk,1),1);
-%    end
-end
-
-
-% %%%%%%%% Utility check %%%%%%%%%%%
-% realulot=zeros(length(Income),3);
-% conlist=(1:length(Income))';
-% inhouselist=conlist(popinhouse);
-% maxulot=zeros(1,[]);
-% imaxulot=zeros(1,[]);
-% for c=1:length(Income)
-%     [maxulot(c),imaxulot(c)]=max(U(c,:),[],2);   
-% end
-% for c=1:length(inhouselist)
-%     ireallot=find(con2lot(:,2)==inhouselist(c));
-%     realulot(inhouselist(c),1:3)=[ireallot lotchoice(ireallot,5) U(inhouselist(c),ireallot)];
-% end
-% maxuset=[imaxulot' lotchoice(imaxulot,5) maxulot'];
-% fullset=[conlist realulot maxuset];
-% utildiff(t)=mean(fullset(fullset(:,4)~=0,7)-fullset(fullset(:,4)~=0,4));
-% pctutildiff(t)=mean(fullset(fullset(:,4)~=0,4)./fullset(fullset(:,4)~=0,7));
+            for sv=1:length(istillvac)
+                if Lottype{istillvac(sv),9} == t
+                    lotchoice{istillvac(sv),7}=Paskhouse(istillvac(sv))./(1+discount);
+                elseif Lottype{istillvac(sv),9} < t && relocated(istillvac(sv))== t
+%                     lotchoice{istillvac(sv),7}=Paskhouse(istillvac(sv))*BIDLEVEL{istillvac(sv)};
+                    ifindbrkr=ismember(brkrind,lotchoice{istillvac(sv),2});
+                    lotchoice{istillvac(sv),7}=Paskhouse(istillvac(sv))*...
+                        brkrbidlevel(lotchoice{istillvac(sv),3},brkrid(ifindbrkr));
+%                 elseif Lottype{istillvac(sv),9} < t && relocated(istillvac(sv)) < t
+                elseif Lottype{istillvac(sv),9} < t && relocated(istillvac(sv))< t && relocated(istillvac(sv))> 0    
+                    lotchoice{istillvac(sv),7}=max(Paskhouse(istillvac(sv))-...
+                        discount*Lottype{istillvac(sv),6}*(t-Lottype{istillvac(sv),9}),0);
+                end
+            end
+            
+            for kk=1:length(Lottype(:,1))
+                RENT(cat(1,Lottype{kk,2}),t)=ones(length(Lottype{kk,2}),1)*cat(1,lotchoice{kk,7});
+                %    isamecell=ismember(Lottype(:,2),cellinfo(kk,2));
+                %    if length(find(isamecell==1)) > 1
+                %        RENT(cellinfo(kk,2))=mean(con2lot(Lottype(isamecell,1),1));
+                %    elseif length(find(isamecell==1)) == 1
+                %        RENT(cellinfo(kk,2))=con2lot(cellinfo(kk,1),1);
+                %    end
+            end
+            
+            
+            % %%%%%%%% Utility check %%%%%%%%%%%
+            % realulot=zeros(length(Income),3);
+            % conlist=(1:length(Income))';
+            % inhouselist=conlist(popinhouse);
+            % maxulot=zeros(1,[]);
+            % imaxulot=zeros(1,[]);
+            % for c=1:length(Income)
+            %     [maxulot(c),imaxulot(c)]=max(U(c,:),[],2);
+            % end
+            % for c=1:length(inhouselist)
+            %     ireallot=find(con2lot(:,2)==inhouselist(c));
+            %     realulot(inhouselist(c),1:3)=[ireallot lotchoice(ireallot,5) U(inhouselist(c),ireallot)];
+            % end
+            % maxuset=[imaxulot' lotchoice(imaxulot,5) maxulot'];
+            % fullset=[conlist realulot maxuset];
+            % utildiff(t)=mean(fullset(fullset(:,4)~=0,7)-fullset(fullset(:,4)~=0,4));
+            % pctutildiff(t)=mean(fullset(fullset(:,4)~=0,4)./fullset(fullset(:,4)~=0,7));
             
             RENTGRAD(lotlocate(:,2))=RENT(lotlocate(:,2),t).*1./cat(1,Lottype{lotlocate(:,1),3});
             %<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
@@ -3467,7 +3557,8 @@ end
                     end
                     
                     % Calculate average utilities for rent projection of unknown
-                    isnotvac=(iblots(:,3)==1);
+%                     isnotvac=(iblots(:,3)==1);
+                    isnotvac=(iblots(:,4)~=0);
                     if isempty(find(isnotvac,1))==1
                         continue
                     else
@@ -3476,17 +3567,25 @@ end
                             mean(cat(1,CONINFO{iblots(isnotvac,4),4})) ...
                             mean(cat(1,CONINFO{iblots(isnotvac,4),5})) ...
                             mean(cat(1,CONINFO{iblots(isnotvac,4),6}))];
-                        AVGUTIL(brokerind(isnotvac))=CONINFO(iblots(isnotvac,4),9);
+%                         AVGUTIL(brokerind(isnotvac))=CONINFO(iblots(isnotvac,4),9);
+                        AVGUTIL(brokerind(isnotvac))=CONINFO(iblots(isnotvac,4),10);
                     end
                     BIDLEVEL(brokerind)=num2cell(cat(1,lotchoice{brokerind,7})./(cat(1,Lottype{brokerind,6})+...
                         discount*subplandinfo(cat(1,lotchoice{brokerind,2})).*...
                         cat(1,Lottype{brokerind,3})));
+                    for ht=1:HT
+                        bidlevels=cat(1,BIDLEVEL{brokerind});
+                        brkrbidlevel(ht,ibr)=mean(bidlevels(iblots(:,2)==ht));
+                    end
                     sampleinfo=zeros(length(brokerind),6);
-                    sampleinfo(:,1)=cat(1,lotchoice{brokerind,7});
+%                     sampleinfo(:,1)=cat(1,lotchoice{brokerind,7});
+                    sampleinfo(:,1)=cat(1,BIDLEVEL{brokerind}).*cat(1,lotchoice{brokerind,7});
                     sampleinfo(:,2)=cat(1,lotchoice{brokerind,3});
                     sampleinfo(:,3)=cat(1,lotchoice{brokerind,4});
                     sampleinfo(:,4)=nbids;
-                    sampleinfo(:,5)=cat(1,lotchoice{brokerind,7})./(cat(1,Lottype{brokerind,6})+...
+%                     sampleinfo(:,5)=cat(1,lotchoice{brokerind,7})./(cat(1,Lottype{brokerind,6})+...
+%                         discount*subplandinfo(cat(1,lotchoice{brokerind,2})).*cat(1,Lottype{brokerind,3}));
+                    sampleinfo(:,5)=sampleinfo(:,1)./(cat(1,Lottype{brokerind,6})+...
                         discount*subplandinfo(cat(1,lotchoice{brokerind,2})).*cat(1,Lottype{brokerind,3}));
                     sampleinfo(:,6)=cat(1,lotchoice{brokerind,8});
                     
@@ -3632,7 +3731,7 @@ end
             %%% RESULTS %%%
             numtotbids(:,t)=sum(houseinfo(:,4,:,t),3);
             for lt=1:HT
-                iocc=(cat(1,lotchoice{:,4})~=0 & cat(1,lotchoice{:,3})==lt);
+                iocc=(cat(1,lotchoice{:,5})~=0 & cat(1,lotchoice{:,3})==lt);
                 htincome(lt,t)=mean(cat(1,CONINFO{cat(1,lotchoice{iocc,5}),1}));
             end
             
@@ -3822,7 +3921,7 @@ end
         
        
 %         ndate=datestr(date,'ddmmyy');
-        savefname=sprintf('coast_amenityslope_025_%d.mat',mrun);
+        savefname=sprintf('relocation_test_%d.mat',mrun);
         parsave_storm(savefname,...
             consumerstats,vacstats,BUILDTIME,VACLAND,RENT,RETURN,LOTTYPE,...
             BASELAYER,Rpop,Rvacrate,Rvaclots,numlt,Rleftoverpop,avgrentdynms,...
@@ -3835,7 +3934,8 @@ end
             Bprojmap,Bmodelmap,WTAlandmap,WTPlandmap,Landprojmap,Landmodmap,...
             bidshare,buildshare,landdemand,EXPTHOUSE,lotchoice,Exptprofit,...
             Exptret,Realexptret,Realavgexptret,idealset,profset,avgbrokervar,...
-            carrycost,Lottype,CONINFO,PREFMAP,TSI,IMPACT,DAMAGE,LANDINFO,lotlocate);
+            carrycost,Lottype,CONINFO,PREFMAP,TSI,IMPACT,DAMAGE,LANDINFO,...
+            lotlocate,relocated,reloc_stats);
         
         %         fname=sprintf('results_CHALMS_Coast_batch_%d_%d',erun,mrun);
         
